@@ -11,6 +11,7 @@
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import React, { useState } from 'react';
 import {
     Alert,
@@ -48,6 +49,7 @@ interface Student {
 }
 
 export default function ClassesScreen() {
+  const { colors, isDark } = useTheme();
   const [selectedSubject, setSelectedSubject] = useState<string>('All');
   const [selectedGrade, setSelectedGrade] = useState<string>('All');
   const [showSubjectFilter, setShowSubjectFilter] = useState(false);
@@ -301,69 +303,69 @@ export default function ClassesScreen() {
         animationType="slide"
         onRequestClose={() => setShowAttendanceModal(false)}
       >
-        <View style={styles.attendanceContainer}>
+        <View style={[styles.attendanceContainer, { backgroundColor: colors.background.primary }]}>
           {/* Header */}
-          <View style={styles.attendanceHeader}>
+          <View style={[styles.attendanceHeader, { backgroundColor: colors.primary.main, borderBottomColor: colors.ui.border }]}>
             <TouchableOpacity
               onPress={() => setShowAttendanceModal(false)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <IconSymbol name="chevron.left" size={24} color={AppColors.primary.contrast} />
+              <IconSymbol name="chevron.left" size={24} color={colors.primary.contrast} />
             </TouchableOpacity>
             <View style={styles.attendanceHeaderCenter}>
-              <Text style={styles.attendanceHeaderTitle}>Take Attendance</Text>
-              <Text style={styles.attendanceHeaderSubtitle}>{selectedClass.className}</Text>
+              <Text style={[styles.attendanceHeaderTitle, { color: colors.primary.contrast }]}>Take Attendance</Text>
+              <Text style={[styles.attendanceHeaderSubtitle, { color: colors.primary.contrast }]}>{selectedClass.className}</Text>
             </View>
             <View style={{ width: 24 }} />
           </View>
 
           {/* Class Info Card */}
-          <View style={styles.attendanceClassInfo}>
+          <View style={[styles.attendanceClassInfo, { backgroundColor: colors.background.secondary, borderBottomColor: colors.ui.border }]}>
             <View style={styles.attendanceClassInfoRow}>
-              <IconSymbol name="book.fill" size={18} color={AppColors.primary.main} />
-              <Text style={styles.attendanceClassInfoText}>{selectedClass.subject}</Text>
+              <IconSymbol name="book.fill" size={18} color={colors.primary.main} />
+              <Text style={[styles.attendanceClassInfoText, { color: colors.text.primary }]}>{selectedClass.subject}</Text>
             </View>
             <View style={styles.attendanceClassInfoRow}>
-              <IconSymbol name="location.fill" size={18} color={AppColors.primary.main} />
-              <Text style={styles.attendanceClassInfoText}>{selectedClass.room}</Text>
+              <IconSymbol name="location.fill" size={18} color={colors.primary.main} />
+              <Text style={[styles.attendanceClassInfoText, { color: colors.text.primary }]}>{selectedClass.room}</Text>
             </View>
             <View style={styles.attendanceClassInfoRow}>
-              <IconSymbol name="clock.fill" size={18} color={AppColors.primary.main} />
-              <Text style={styles.attendanceClassInfoText}>{selectedClass.nextClassTime}</Text>
+              <IconSymbol name="clock.fill" size={18} color={colors.primary.main} />
+              <Text style={[styles.attendanceClassInfoText, { color: colors.text.primary }]}>{selectedClass.nextClassTime}</Text>
             </View>
           </View>
 
           {/* Stats */}
           <View style={styles.attendanceStats}>
-            <View style={[styles.attendanceStatBox, { backgroundColor: AppColors.status.success.background }]}>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.status.success.main }]}>
+            <View style={[styles.attendanceStatBox, { backgroundColor: colors.status.success.background }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.status.success.main }]}>
                 {counts.present}
               </Text>
-              <Text style={[styles.attendanceStatLabel, { color: AppColors.status.success.text }]}>
+              <Text style={[styles.attendanceStatLabel, { color: colors.status.success.text }]}>
                 Present
               </Text>
             </View>
-            <View style={[styles.attendanceStatBox, { backgroundColor: AppColors.status.warning.background }]}>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.status.warning.main }]}>
+            <View style={[styles.attendanceStatBox, { backgroundColor: colors.status.warning.background }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.status.warning.main }]}>
                 {counts.late}
               </Text>
-              <Text style={[styles.attendanceStatLabel, { color: AppColors.status.warning.text }]}>
+              <Text style={[styles.attendanceStatLabel, { color: colors.status.warning.text }]}>
                 Late
               </Text>
             </View>
-            <View style={[styles.attendanceStatBox, { backgroundColor: AppColors.status.error.background }]}>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.status.error.main }]}>
+            <View style={[styles.attendanceStatBox, { backgroundColor: colors.status.error.background }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.status.error.main }]}>
                 {counts.absent}
               </Text>
-              <Text style={[styles.attendanceStatLabel, { color: AppColors.status.error.text }]}>
+              <Text style={[styles.attendanceStatLabel, { color: colors.status.error.text }]}>
                 Absent
               </Text>
             </View>
-            <View style={[styles.attendanceStatBox, { backgroundColor: AppColors.background.secondary }]}>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.text.secondary }]}>
+            <View style={[styles.attendanceStatBox, { backgroundColor: colors.background.secondary }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.text.secondary }]}>
                 {counts.unmarked}
               </Text>
-              <Text style={[styles.attendanceStatLabel, { color: AppColors.text.secondary }]}>
+              <Text style={[styles.attendanceStatLabel, { color: colors.text.secondary }]}>
                 Unmarked
               </Text>
             </View>
@@ -372,12 +374,12 @@ export default function ClassesScreen() {
           {/* Mark All Button */}
           <View style={styles.markAllContainer}>
             <TouchableOpacity
-              style={styles.markAllButton}
+              style={[styles.markAllButton, { backgroundColor: colors.status.success.main }]}
               onPress={markAllPresent}
               activeOpacity={0.7}
             >
-              <IconSymbol name="checkmark.circle.fill" size={20} color={AppColors.primary.contrast} />
-              <Text style={styles.markAllButtonText}>Mark All Present</Text>
+              <IconSymbol name="checkmark.circle.fill" size={20} color={colors.primary.contrast} />
+              <Text style={[styles.markAllButtonText, { color: colors.primary.contrast }]}>Mark All Present</Text>
             </TouchableOpacity>
           </View>
 
@@ -387,15 +389,15 @@ export default function ClassesScreen() {
             keyExtractor={(item) => item.id}
             contentContainerStyle={styles.attendanceList}
             renderItem={({ item }) => (
-              <View style={styles.attendanceStudentCard}>
+              <View style={[styles.attendanceStudentCard, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}>
                 {/* Student Info */}
                 <View style={styles.attendanceStudentInfo}>
-                  <View style={styles.attendanceStudentAvatar}>
-                    <Text style={styles.attendanceAvatarText}>{getInitials(item.name)}</Text>
+                  <View style={[styles.attendanceStudentAvatar, { backgroundColor: colors.primary.main }]}>
+                    <Text style={[styles.attendanceAvatarText, { color: colors.primary.contrast }]}>{getInitials(item.name)}</Text>
                   </View>
                   <View style={styles.attendanceStudentDetails}>
-                    <Text style={styles.attendanceStudentName}>{item.name}</Text>
-                    <Text style={styles.attendanceStudentRoll}>Roll No: {item.rollNumber}</Text>
+                    <Text style={[styles.attendanceStudentName, { color: colors.text.primary }]}>{item.name}</Text>
+                    <Text style={[styles.attendanceStudentRoll, { color: colors.text.secondary }]}>Roll No: {item.rollNumber}</Text>
                   </View>
                 </View>
 
@@ -409,16 +411,16 @@ export default function ClassesScreen() {
                   >
                     <View style={[
                       styles.attendanceRadioOuter,
-                      { borderColor: AppColors.status.success.main },
-                      item.status === 'present' && { backgroundColor: AppColors.status.success.main },
+                      { borderColor: colors.status.success.main },
+                      item.status === 'present' && { backgroundColor: colors.status.success.main },
                     ]}>
                       {item.status === 'present' && (
-                        <View style={styles.attendanceRadioInner} />
+                        <View style={[styles.attendanceRadioInner, { backgroundColor: colors.primary.contrast }]} />
                       )}
                     </View>
                     <Text style={[
                       styles.attendanceRadioLabel,
-                      item.status === 'present' && { color: AppColors.status.success.main, fontWeight: '700' },
+                      { color: item.status === 'present' ? colors.status.success.main : colors.text.secondary, fontWeight: item.status === 'present' ? '700' : '400' },
                     ]}>
                       P
                     </Text>
@@ -432,16 +434,16 @@ export default function ClassesScreen() {
                   >
                     <View style={[
                       styles.attendanceRadioOuter,
-                      { borderColor: AppColors.status.warning.main },
-                      item.status === 'late' && { backgroundColor: AppColors.status.warning.main },
+                      { borderColor: colors.status.warning.main },
+                      item.status === 'late' && { backgroundColor: colors.status.warning.main },
                     ]}>
                       {item.status === 'late' && (
-                        <View style={styles.attendanceRadioInner} />
+                        <View style={[styles.attendanceRadioInner, { backgroundColor: colors.primary.contrast }]} />
                       )}
                     </View>
                     <Text style={[
                       styles.attendanceRadioLabel,
-                      item.status === 'late' && { color: AppColors.status.warning.main, fontWeight: '700' },
+                      { color: item.status === 'late' ? colors.status.warning.main : colors.text.secondary, fontWeight: item.status === 'late' ? '700' : '400' },
                     ]}>
                       L
                     </Text>
@@ -455,16 +457,16 @@ export default function ClassesScreen() {
                   >
                     <View style={[
                       styles.attendanceRadioOuter,
-                      { borderColor: AppColors.status.error.main },
-                      item.status === 'absent' && { backgroundColor: AppColors.status.error.main },
+                      { borderColor: colors.status.error.main },
+                      item.status === 'absent' && { backgroundColor: colors.status.error.main },
                     ]}>
                       {item.status === 'absent' && (
-                        <View style={styles.attendanceRadioInner} />
+                        <View style={[styles.attendanceRadioInner, { backgroundColor: colors.primary.contrast }]} />
                       )}
                     </View>
                     <Text style={[
                       styles.attendanceRadioLabel,
-                      item.status === 'absent' && { color: AppColors.status.error.main, fontWeight: '700' },
+                      { color: item.status === 'absent' ? colors.status.error.main : colors.text.secondary, fontWeight: item.status === 'absent' ? '700' : '400' },
                     ]}>
                       A
                     </Text>
@@ -475,14 +477,14 @@ export default function ClassesScreen() {
           />
 
           {/* Submit Button */}
-          <View style={styles.attendanceSubmitContainer}>
+          <View style={[styles.attendanceSubmitContainer, { backgroundColor: colors.background.primary, borderTopColor: colors.ui.border }]}>
             <TouchableOpacity
-              style={styles.attendanceSubmitButton}
+              style={[styles.attendanceSubmitButton, { backgroundColor: colors.primary.main }]}
               onPress={submitAttendance}
               activeOpacity={0.8}
             >
-              <IconSymbol name="checkmark.seal.fill" size={20} color={AppColors.primary.contrast} />
-              <Text style={styles.attendanceSubmitButtonText}>Submit Attendance</Text>
+              <IconSymbol name="checkmark.seal.fill" size={20} color={colors.primary.contrast} />
+              <Text style={[styles.attendanceSubmitButtonText, { color: colors.primary.contrast }]}>Submit Attendance</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -501,66 +503,66 @@ export default function ClassesScreen() {
         animationType="slide"
         onRequestClose={handleCloseDetails}
       >
-        <View style={styles.modalOverlay}>
-          <Animated.View style={[styles.detailsModal, { opacity: fadeAnim }]}>
+        <View style={[styles.modalOverlay, { backgroundColor: colors.ui.overlay }]}>
+          <Animated.View style={[styles.detailsModal, { opacity: fadeAnim, backgroundColor: colors.background.primary }]}>
             {/* Header */}
-            <View style={styles.detailsHeader}>
+            <View style={[styles.detailsHeader, { backgroundColor: colors.background.secondary, borderBottomColor: colors.ui.border }]}>
               <View style={styles.detailsHeaderLeft}>
-                <IconSymbol name="book.fill" size={28} color={AppColors.primary.main} />
+                <IconSymbol name="book.fill" size={28} color={colors.primary.main} />
                 <View style={styles.detailsHeaderText}>
-                  <Text style={styles.detailsTitle}>{selectedClass.className}</Text>
-                  <Text style={styles.detailsSubtitle}>{selectedClass.subject}</Text>
+                  <Text style={[styles.detailsTitle, { color: colors.text.primary }]}>{selectedClass.className}</Text>
+                  <Text style={[styles.detailsSubtitle, { color: colors.text.secondary }]}>{selectedClass.subject}</Text>
                 </View>
               </View>
               <TouchableOpacity
                 onPress={handleCloseDetails}
                 hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               >
-                <IconSymbol name="xmark" size={24} color={AppColors.text.secondary} />
+                <IconSymbol name="xmark" size={24} color={colors.text.secondary} />
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.detailsContent} showsVerticalScrollIndicator={false}>
               {/* Quick Stats */}
-              <View style={styles.detailsSection}>
-                <Text style={styles.detailsSectionTitle}>📊 Quick Stats</Text>
+              <View style={[styles.detailsSection, { borderBottomColor: colors.ui.divider }]}>
+                <Text style={[styles.detailsSectionTitle, { color: colors.text.primary }]}>📊 Quick Stats</Text>
                 <View style={styles.detailsStatsGrid}>
-                  <View style={styles.detailsStatCard}>
-                    <IconSymbol name="person.2.fill" size={24} color={AppColors.primary.main} />
-                    <Text style={styles.detailsStatNumber}>{selectedClass.totalStudents}</Text>
-                    <Text style={styles.detailsStatLabel}>Students</Text>
+                  <View style={[styles.detailsStatCard, { backgroundColor: colors.background.secondary }]}>
+                    <IconSymbol name="person.2.fill" size={24} color={colors.primary.main} />
+                    <Text style={[styles.detailsStatNumber, { color: colors.text.primary }]}>{selectedClass.totalStudents}</Text>
+                    <Text style={[styles.detailsStatLabel, { color: colors.text.secondary }]}>Students</Text>
                   </View>
-                  <View style={styles.detailsStatCard}>
-                    <IconSymbol name="checkmark.circle.fill" size={24} color={AppColors.status.success.main} />
-                    <Text style={styles.detailsStatNumber}>{selectedClass.averageAttendance}%</Text>
-                    <Text style={styles.detailsStatLabel}>Attendance</Text>
+                  <View style={[styles.detailsStatCard, { backgroundColor: colors.background.secondary }]}>
+                    <IconSymbol name="checkmark.circle.fill" size={24} color={colors.status.success.main} />
+                    <Text style={[styles.detailsStatNumber, { color: colors.text.primary }]}>{selectedClass.averageAttendance}%</Text>
+                    <Text style={[styles.detailsStatLabel, { color: colors.text.secondary }]}>Attendance</Text>
                   </View>
-                  <View style={styles.detailsStatCard}>
-                    <IconSymbol name="doc.text.fill" size={24} color={AppColors.status.warning.main} />
-                    <Text style={styles.detailsStatNumber}>{selectedClass.pendingAssignments}</Text>
-                    <Text style={styles.detailsStatLabel}>Pending</Text>
+                  <View style={[styles.detailsStatCard, { backgroundColor: colors.background.secondary }]}>
+                    <IconSymbol name="doc.text.fill" size={24} color={colors.status.warning.main} />
+                    <Text style={[styles.detailsStatNumber, { color: colors.text.primary }]}>{selectedClass.pendingAssignments}</Text>
+                    <Text style={[styles.detailsStatLabel, { color: colors.text.secondary }]}>Pending</Text>
                   </View>
                 </View>
               </View>
 
               {/* Class Information */}
-              <View style={styles.detailsSection}>
-                <Text style={styles.detailsSectionTitle}>📚 Class Information</Text>
-                <View style={styles.detailsInfoCard}>
+              <View style={[styles.detailsSection, { borderBottomColor: colors.ui.divider }]}>
+                <Text style={[styles.detailsSectionTitle, { color: colors.text.primary }]}>📚 Class Information</Text>
+                <View style={[styles.detailsInfoCard, { backgroundColor: colors.background.secondary }]}>
                   <View style={styles.detailsInfoRow}>
-                    <IconSymbol name="location.fill" size={18} color={AppColors.primary.main} />
-                    <Text style={styles.detailsInfoLabel}>Room:</Text>
-                    <Text style={styles.detailsInfoValue}>{selectedClass.room}</Text>
+                    <IconSymbol name="location.fill" size={18} color={colors.primary.main} />
+                    <Text style={[styles.detailsInfoLabel, { color: colors.text.secondary }]}>Room:</Text>
+                    <Text style={[styles.detailsInfoValue, { color: colors.text.primary }]}>{selectedClass.room}</Text>
                   </View>
                   <View style={styles.detailsInfoRow}>
-                    <IconSymbol name="clock.fill" size={18} color={AppColors.primary.main} />
-                    <Text style={styles.detailsInfoLabel}>Schedule:</Text>
-                    <Text style={styles.detailsInfoValue}>{selectedClass.schedule}</Text>
+                    <IconSymbol name="clock.fill" size={18} color={colors.primary.main} />
+                    <Text style={[styles.detailsInfoLabel, { color: colors.text.secondary }]}>Schedule:</Text>
+                    <Text style={[styles.detailsInfoValue, { color: colors.text.primary }]}>{selectedClass.schedule}</Text>
                   </View>
                   <View style={styles.detailsInfoRow}>
-                    <IconSymbol name="calendar" size={18} color={AppColors.primary.main} />
-                    <Text style={styles.detailsInfoLabel}>Next Class:</Text>
-                    <Text style={styles.detailsInfoValue}>
+                    <IconSymbol name="calendar" size={18} color={colors.primary.main} />
+                    <Text style={[styles.detailsInfoLabel, { color: colors.text.secondary }]}>Next Class:</Text>
+                    <Text style={[styles.detailsInfoValue, { color: colors.text.primary }]}>
                       {selectedClass.nextClassDay} at {selectedClass.nextClassTime}
                     </Text>
                   </View>
@@ -568,24 +570,24 @@ export default function ClassesScreen() {
               </View>
 
               {/* Recent Activity */}
-              <View style={styles.detailsSection}>
-                <Text style={styles.detailsSectionTitle}>📈 Recent Activity</Text>
+              <View style={[styles.detailsSection, { borderBottomColor: colors.ui.divider }]}>
+                <Text style={[styles.detailsSectionTitle, { color: colors.text.primary }]}>📈 Recent Activity</Text>
                 <View style={styles.activityCard}>
                   <View style={styles.activityItem}>
-                    <View style={[styles.activityDot, { backgroundColor: AppColors.status.success.main }]} />
-                    <Text style={styles.activityText}>
+                    <View style={[styles.activityDot, { backgroundColor: colors.status.success.main }]} />
+                    <Text style={[styles.activityText, { color: colors.text.primary }]}>
                       Attendance marked for {selectedClass.nextClassDay === 'Today' ? 'yesterday' : 'last class'}
                     </Text>
                   </View>
                   <View style={styles.activityItem}>
-                    <View style={[styles.activityDot, { backgroundColor: AppColors.status.info.main }]} />
-                    <Text style={styles.activityText}>
+                    <View style={[styles.activityDot, { backgroundColor: colors.status.info.main }]} />
+                    <Text style={[styles.activityText, { color: colors.text.primary }]}>
                       {selectedClass.recentTests} tests conducted this month
                     </Text>
                   </View>
                   <View style={styles.activityItem}>
-                    <View style={[styles.activityDot, { backgroundColor: AppColors.status.warning.main }]} />
-                    <Text style={styles.activityText}>
+                    <View style={[styles.activityDot, { backgroundColor: colors.status.warning.main }]} />
+                    <Text style={[styles.activityText, { color: colors.text.primary }]}>
                       {selectedClass.pendingAssignments} assignments pending review
                     </Text>
                   </View>
@@ -593,96 +595,96 @@ export default function ClassesScreen() {
               </View>
 
               {/* Performance Overview */}
-              <View style={styles.detailsSection}>
-                <Text style={styles.detailsSectionTitle}>🎯 Performance Overview</Text>
-                <View style={styles.performanceCard}>
+              <View style={[styles.detailsSection, { borderBottomColor: colors.ui.divider }]}>
+                <Text style={[styles.detailsSectionTitle, { color: colors.text.primary }]}>🎯 Performance Overview</Text>
+                <View style={[styles.performanceCard, { backgroundColor: colors.background.secondary }]}>
                   <View style={styles.performanceRow}>
-                    <Text style={styles.performanceLabel}>Average Attendance</Text>
+                    <Text style={[styles.performanceLabel, { color: colors.text.secondary }]}>Average Attendance</Text>
                     <View style={styles.performanceBarContainer}>
-                      <View style={styles.performanceBarBackground}>
+                      <View style={[styles.performanceBarBackground, { backgroundColor: colors.ui.divider }]}>
                         <View 
                           style={[
                             styles.performanceBarFill, 
                             { 
                               width: `${selectedClass.averageAttendance}%`,
                               backgroundColor: 
-                                selectedClass.averageAttendance >= 90 ? AppColors.status.success.main :
-                                selectedClass.averageAttendance >= 75 ? AppColors.status.warning.main :
-                                AppColors.status.error.main
+                                selectedClass.averageAttendance >= 90 ? colors.status.success.main :
+                                selectedClass.averageAttendance >= 75 ? colors.status.warning.main :
+                                colors.status.error.main
                             }
                           ]} 
                         />
                       </View>
-                      <Text style={styles.performanceValue}>{selectedClass.averageAttendance}%</Text>
+                      <Text style={[styles.performanceValue, { color: colors.text.primary }]}>{selectedClass.averageAttendance}%</Text>
                     </View>
                   </View>
                 </View>
               </View>
 
               {/* Quick Actions */}
-              <View style={styles.detailsSection}>
-                <Text style={styles.detailsSectionTitle}>⚡ Quick Actions</Text>
+              <View style={[styles.detailsSection, { borderBottomColor: colors.ui.divider }]}>
+                <Text style={[styles.detailsSectionTitle, { color: colors.text.primary }]}>⚡ Quick Actions</Text>
                 <TouchableOpacity
-                  style={styles.detailsActionButton}
+                  style={[styles.detailsActionButton, { backgroundColor: colors.background.secondary }]}
                   onPress={() => {
                     handleCloseDetails();
                     setTimeout(() => handleTakeAttendance(selectedClass), 300);
                   }}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.detailsActionIcon, { backgroundColor: AppColors.primary.main }]}>
-                    <IconSymbol name="checkmark.circle.fill" size={24} color={AppColors.primary.contrast} />
+                  <View style={[styles.detailsActionIcon, { backgroundColor: colors.primary.main }]}>
+                    <IconSymbol name="checkmark.circle.fill" size={24} color={colors.primary.contrast} />
                   </View>
                   <View style={styles.detailsActionText}>
-                    <Text style={styles.detailsActionTitle}>Take Attendance</Text>
-                    <Text style={styles.detailsActionSubtitle}>Mark attendance for this class</Text>
+                    <Text style={[styles.detailsActionTitle, { color: colors.text.primary }]}>Take Attendance</Text>
+                    <Text style={[styles.detailsActionSubtitle, { color: colors.text.secondary }]}>Mark attendance for this class</Text>
                   </View>
-                  <IconSymbol name="chevron.right" size={20} color={AppColors.text.tertiary} />
+                  <IconSymbol name="chevron.right" size={20} color={colors.text.tertiary} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.detailsActionButton}
+                  style={[styles.detailsActionButton, { backgroundColor: colors.background.secondary }]}
                   onPress={() => {
                     Alert.alert('View Students', `Showing ${selectedClass.totalStudents} students from ${selectedClass.className}`);
                   }}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.detailsActionIcon, { backgroundColor: AppColors.status.info.main }]}>
-                    <IconSymbol name="person.3.fill" size={24} color={AppColors.primary.contrast} />
+                  <View style={[styles.detailsActionIcon, { backgroundColor: colors.status.info.main }]}>
+                    <IconSymbol name="person.3.fill" size={24} color={colors.primary.contrast} />
                   </View>
                   <View style={styles.detailsActionText}>
-                    <Text style={styles.detailsActionTitle}>View Students</Text>
-                    <Text style={styles.detailsActionSubtitle}>See all {selectedClass.totalStudents} students</Text>
+                    <Text style={[styles.detailsActionTitle, { color: colors.text.primary }]}>View Students</Text>
+                    <Text style={[styles.detailsActionSubtitle, { color: colors.text.secondary }]}>See all {selectedClass.totalStudents} students</Text>
                   </View>
-                  <IconSymbol name="chevron.right" size={20} color={AppColors.text.tertiary} />
+                  <IconSymbol name="chevron.right" size={20} color={colors.text.tertiary} />
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  style={styles.detailsActionButton}
+                  style={[styles.detailsActionButton, { backgroundColor: colors.background.secondary }]}
                   onPress={() => {
                     Alert.alert('Create Assignment', `Creating new assignment for ${selectedClass.className}`);
                   }}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.detailsActionIcon, { backgroundColor: AppColors.status.warning.main }]}>
-                    <IconSymbol name="doc.text.fill" size={24} color={AppColors.primary.contrast} />
+                  <View style={[styles.detailsActionIcon, { backgroundColor: colors.status.warning.main }]}>
+                    <IconSymbol name="doc.text.fill" size={24} color={colors.primary.contrast} />
                   </View>
                   <View style={styles.detailsActionText}>
-                    <Text style={styles.detailsActionTitle}>Create Assignment</Text>
-                    <Text style={styles.detailsActionSubtitle}>Add new assignment for class</Text>
+                    <Text style={[styles.detailsActionTitle, { color: colors.text.primary }]}>Create Assignment</Text>
+                    <Text style={[styles.detailsActionSubtitle, { color: colors.text.secondary }]}>Add new assignment for class</Text>
                   </View>
-                  <IconSymbol name="chevron.right" size={20} color={AppColors.text.tertiary} />
+                  <IconSymbol name="chevron.right" size={20} color={colors.text.tertiary} />
                 </TouchableOpacity>
               </View>
             </ScrollView>
 
             {/* Close Button */}
             <TouchableOpacity
-              style={styles.detailsCloseButton}
+              style={[styles.detailsCloseButton, { backgroundColor: colors.primary.main }]}
               onPress={handleCloseDetails}
               activeOpacity={0.8}
             >
-              <Text style={styles.detailsCloseButtonText}>Close</Text>
+              <Text style={[styles.detailsCloseButtonText, { color: colors.primary.contrast }]}>Close</Text>
             </TouchableOpacity>
           </Animated.View>
         </View>
@@ -712,19 +714,19 @@ export default function ClassesScreen() {
       onRequestClose={onClose}
     >
       <TouchableOpacity
-        style={styles.modalOverlay}
+        style={[styles.modalOverlay, { backgroundColor: colors.ui.overlay }]}
         activeOpacity={1}
         onPress={onClose}
       >
-        <View style={styles.filterModalContent}>
-          <Text style={styles.filterModalTitle}>{title}</Text>
+        <View style={[styles.filterModalContent, { backgroundColor: colors.ui.card }]}>
+          <Text style={[styles.filterModalTitle, { color: colors.text.primary }]}>{title}</Text>
           <ScrollView style={styles.filterModalScroll}>
             {options.map((option) => (
               <TouchableOpacity
                 key={option}
                 style={[
                   styles.filterModalOption,
-                  selectedValue === option && styles.filterModalOptionSelected,
+                  selectedValue === option && { backgroundColor: isDark ? colors.background.tertiary : colors.background.secondary },
                 ]}
                 onPress={() => {
                   onSelect(option);
@@ -734,13 +736,14 @@ export default function ClassesScreen() {
                 <Text
                   style={[
                     styles.filterModalOptionText,
-                    selectedValue === option && styles.filterModalOptionTextSelected,
+                    { color: colors.text.primary },
+                    selectedValue === option && { color: colors.primary.main, fontWeight: '700' },
                   ]}
                 >
                   {option}
                 </Text>
                 {selectedValue === option && (
-                  <IconSymbol name="checkmark" size={20} color={AppColors.primary.main} />
+                  <IconSymbol name="checkmark" size={20} color={colors.primary.main} />
                 )}
               </TouchableOpacity>
             ))}
@@ -751,96 +754,96 @@ export default function ClassesScreen() {
   );
 
   const renderClassCard = ({ item }: { item: ClassItem }) => (
-    <View style={styles.classCard}>
+    <View style={[styles.classCard, { backgroundColor: colors.ui.card, borderColor: colors.ui.border }]}>
       {/* Card Header */}
       <View style={styles.cardHeader}>
         <View style={styles.cardHeaderLeft}>
-          <Text style={styles.className}>{item.className}</Text>
-          <Text style={styles.subject}>{item.subject}</Text>
+          <Text style={[styles.className, { color: colors.text.primary }]}>{item.className}</Text>
+          <Text style={[styles.subject, { color: colors.text.secondary }]}>{item.subject}</Text>
         </View>
-        <View style={styles.gradeBadge}>
-          <Text style={styles.gradeBadgeText}>Grade {item.grade}</Text>
+        <View style={[styles.gradeBadge, { backgroundColor: colors.primary.main }]}>
+          <Text style={[styles.gradeBadgeText, { color: colors.primary.contrast }]}>Grade {item.grade}</Text>
         </View>
       </View>
 
       {/* Card Details */}
       <View style={styles.cardDetails}>
         <View style={styles.detailRow}>
-          <IconSymbol name="person.2.fill" size={18} color={AppColors.primary.main} />
-          <Text style={styles.detailText}>{item.totalStudents} Students</Text>
+          <IconSymbol name="person.2.fill" size={18} color={colors.primary.main} />
+          <Text style={[styles.detailText, { color: colors.text.primary }]}>{item.totalStudents} Students</Text>
         </View>
         <View style={styles.detailRow}>
-          <IconSymbol name="clock.fill" size={18} color={AppColors.primary.main} />
-          <Text style={styles.detailText}>
+          <IconSymbol name="clock.fill" size={18} color={colors.primary.main} />
+          <Text style={[styles.detailText, { color: colors.text.primary }]}>
             {item.nextClassDay} at {item.nextClassTime}
           </Text>
         </View>
         <View style={styles.detailRow}>
-          <IconSymbol name="location.fill" size={18} color={AppColors.primary.main} />
-          <Text style={styles.detailText}>{item.room}</Text>
+          <IconSymbol name="location.fill" size={18} color={colors.primary.main} />
+          <Text style={[styles.detailText, { color: colors.text.primary }]}>{item.room}</Text>
         </View>
       </View>
 
       {/* Action Buttons */}
-      <View style={styles.cardActions}>
+      <View style={[styles.cardActions, { borderTopColor: colors.ui.divider }]}>
         <TouchableOpacity
-          style={[styles.actionButton, styles.viewButton]}
+          style={[styles.actionButton, styles.viewButton, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}
           onPress={() => handleViewClass(item)}
           activeOpacity={0.7}
         >
-          <IconSymbol name="eye.fill" size={18} color={AppColors.primary.main} />
-          <Text style={styles.viewButtonText}>View</Text>
+          <IconSymbol name="eye.fill" size={18} color={colors.primary.main} />
+          <Text style={[styles.viewButtonText, { color: colors.primary.main }]}>View</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={[styles.actionButton, styles.attendanceButton]}
+          style={[styles.actionButton, styles.attendanceButton, { backgroundColor: colors.primary.main }]}
           onPress={() => handleTakeAttendance(item)}
           activeOpacity={0.7}
         >
-          <IconSymbol name="checkmark.circle.fill" size={18} color={AppColors.primary.contrast} />
-          <Text style={styles.attendanceButtonText}>Take Attendance</Text>
+          <IconSymbol name="checkmark.circle.fill" size={18} color={colors.primary.contrast} />
+          <Text style={[styles.attendanceButtonText, { color: colors.primary.contrast }]}>Take Attendance</Text>
         </TouchableOpacity>
       </View>
     </View>
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
       {/* Filter Section */}
-      <View style={styles.filterSection}>
-        <Text style={styles.filterTitle}>Filters</Text>
+      <View style={[styles.filterSection, { backgroundColor: colors.background.secondary, borderBottomColor: colors.ui.border }]}>
+        <Text style={[styles.filterTitle, { color: colors.text.secondary }]}>Filters</Text>
         <View style={styles.filterButtons}>
           <TouchableOpacity
-            style={styles.filterButton}
+            style={[styles.filterButton, { backgroundColor: colors.ui.card, borderColor: colors.ui.border }]}
             onPress={() => setShowSubjectFilter(true)}
           >
-            <IconSymbol name="book.fill" size={16} color={AppColors.text.secondary} />
-            <Text style={styles.filterButtonText}>
+            <IconSymbol name="book.fill" size={16} color={colors.text.secondary} />
+            <Text style={[styles.filterButtonText, { color: colors.text.primary }]}>
               {selectedSubject === 'All' ? 'Subject' : selectedSubject}
             </Text>
-            <IconSymbol name="chevron.down" size={14} color={AppColors.text.secondary} />
+            <IconSymbol name="chevron.down" size={14} color={colors.text.secondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
-            style={styles.filterButton}
+            style={[styles.filterButton, { backgroundColor: colors.ui.card, borderColor: colors.ui.border }]}
             onPress={() => setShowGradeFilter(true)}
           >
-            <IconSymbol name="graduationcap.fill" size={16} color={AppColors.text.secondary} />
-            <Text style={styles.filterButtonText}>
+            <IconSymbol name="graduationcap.fill" size={16} color={colors.text.secondary} />
+            <Text style={[styles.filterButtonText, { color: colors.text.primary }]}>
               {selectedGrade === 'All' ? 'Grade' : `Grade ${selectedGrade}`}
             </Text>
-            <IconSymbol name="chevron.down" size={14} color={AppColors.text.secondary} />
+            <IconSymbol name="chevron.down" size={14} color={colors.text.secondary} />
           </TouchableOpacity>
 
           {(selectedSubject !== 'All' || selectedGrade !== 'All') && (
             <TouchableOpacity
-              style={styles.clearFilterButton}
+              style={[styles.clearFilterButton, { backgroundColor: colors.status.error.background }]}
               onPress={() => {
                 setSelectedSubject('All');
                 setSelectedGrade('All');
               }}
             >
-              <IconSymbol name="xmark.circle.fill" size={18} color={AppColors.status.error.main} />
+              <IconSymbol name="xmark.circle.fill" size={18} color={colors.status.error.main} />
             </TouchableOpacity>
           )}
         </View>
@@ -848,7 +851,7 @@ export default function ClassesScreen() {
 
       {/* Classes Count */}
       <View style={styles.countSection}>
-        <Text style={styles.countText}>
+        <Text style={[styles.countText, { color: colors.text.primary }]}>
           {filteredClasses.length} {filteredClasses.length === 1 ? 'Class' : 'Classes'}
         </Text>
       </View>
@@ -862,9 +865,9 @@ export default function ClassesScreen() {
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <IconSymbol name="tray.fill" size={64} color={AppColors.text.tertiary} />
-            <Text style={styles.emptyText}>No classes found</Text>
-            <Text style={styles.emptySubtext}>Try adjusting your filters</Text>
+            <IconSymbol name="tray.fill" size={64} color={colors.text.tertiary} />
+            <Text style={[styles.emptyText, { color: colors.text.secondary }]}>No classes found</Text>
+            <Text style={[styles.emptySubtext, { color: colors.text.tertiary }]}>Try adjusting your filters</Text>
           </View>
         }
       />

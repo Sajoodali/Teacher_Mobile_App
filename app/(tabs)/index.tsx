@@ -10,6 +10,7 @@
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
+import { useTheme } from '@/context/ThemeContext';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import {
@@ -34,6 +35,7 @@ interface Notification {
 
 export default function DashboardScreen() {
   const router = useRouter();
+  const { colors, isDark } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
   
@@ -287,38 +289,38 @@ export default function DashboardScreen() {
       animationType="slide"
       onRequestClose={() => setShowReportModal(false)}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.reportModal}>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.ui.overlay }]}>
+        <View style={[styles.reportModal, { backgroundColor: colors.background.primary }]}>
           {/* Modal Header */}
-          <View style={styles.reportHeader}>
+          <View style={[styles.reportHeader, { borderBottomColor: colors.ui.divider }]}>
             <View style={styles.reportHeaderLeft}>
-              <IconSymbol name="chart.bar.fill" size={28} color={AppColors.primary.main} />
-              <Text style={styles.reportTitle}>Attendance Report</Text>
+              <IconSymbol name="chart.bar.fill" size={28} color={colors.primary.main} />
+              <Text style={[styles.reportTitle, { color: colors.text.primary }]}>Attendance Report</Text>
             </View>
             <TouchableOpacity
               onPress={() => setShowReportModal(false)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <IconSymbol name="xmark" size={24} color={AppColors.text.secondary} />
+              <IconSymbol name="xmark" size={24} color={colors.text.secondary} />
             </TouchableOpacity>
           </View>
 
           <ScrollView style={styles.reportContent} showsVerticalScrollIndicator={false}>
             {/* Summary Section */}
             <View style={styles.reportSection}>
-              <Text style={styles.reportSectionTitle}>📊 Today's Summary</Text>
-              <View style={styles.reportSummaryCard}>
+              <Text style={[styles.reportSectionTitle, { color: colors.text.primary }]}>📊 Today's Summary</Text>
+              <View style={[styles.reportSummaryCard, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}>
                 <View style={styles.reportSummaryRow}>
-                  <Text style={styles.reportLabel}>Date:</Text>
-                  <Text style={styles.reportValue}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
+                  <Text style={[styles.reportLabel, { color: colors.text.secondary }]}>Date:</Text>
+                  <Text style={[styles.reportValue, { color: colors.text.primary }]}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</Text>
                 </View>
                 <View style={styles.reportSummaryRow}>
-                  <Text style={styles.reportLabel}>Total Students:</Text>
-                  <Text style={styles.reportValue}>{todayAttendance.total}</Text>
+                  <Text style={[styles.reportLabel, { color: colors.text.secondary }]}>Total Students:</Text>
+                  <Text style={[styles.reportValue, { color: colors.text.primary }]}>{todayAttendance.total}</Text>
                 </View>
                 <View style={styles.reportSummaryRow}>
-                  <Text style={styles.reportLabel}>Attendance Rate:</Text>
-                  <Text style={[styles.reportValue, { color: AppColors.status.success.main, fontWeight: '700' }]}>
+                  <Text style={[styles.reportLabel, { color: colors.text.secondary }]}>Attendance Rate:</Text>
+                  <Text style={[styles.reportValue, { color: colors.status.success.main, fontWeight: '700' }]}>
                     {Math.round((todayAttendance.present / todayAttendance.total) * 100)}%
                   </Text>
                 </View>
@@ -327,36 +329,36 @@ export default function DashboardScreen() {
 
             {/* Detailed Stats */}
             <View style={styles.reportSection}>
-              <Text style={styles.reportSectionTitle}>📈 Detailed Statistics</Text>
+              <Text style={[styles.reportSectionTitle, { color: colors.text.primary }]}>📈 Detailed Statistics</Text>
               
               {/* Present */}
-              <View style={styles.reportStatCard}>
+              <View style={[styles.reportStatCard, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}>
                 <View style={styles.reportStatHeader}>
-                  <View style={[styles.reportStatIcon, { backgroundColor: AppColors.status.success.background }]}>
-                    <IconSymbol name="checkmark.circle.fill" size={24} color={AppColors.status.success.main} />
+                  <View style={[styles.reportStatIcon, { backgroundColor: colors.status.success.background }]}>
+                    <IconSymbol name="checkmark.circle.fill" size={24} color={colors.status.success.main} />
                   </View>
                   <View style={styles.reportStatInfo}>
-                    <Text style={styles.reportStatLabel}>Present</Text>
-                    <Text style={styles.reportStatDescription}>Students who attended today</Text>
+                    <Text style={[styles.reportStatLabel, { color: colors.text.primary }]}>Present</Text>
+                    <Text style={[styles.reportStatDescription, { color: colors.text.secondary }]}>Students who attended today</Text>
                   </View>
                 </View>
-                <Text style={[styles.reportStatNumber, { color: AppColors.status.success.main }]}>
+                <Text style={[styles.reportStatNumber, { color: colors.status.success.main }]}>
                   {todayAttendance.present}
                 </Text>
               </View>
 
               {/* Absent */}
-              <View style={styles.reportStatCard}>
+              <View style={[styles.reportStatCard, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}>
                 <View style={styles.reportStatHeader}>
-                  <View style={[styles.reportStatIcon, { backgroundColor: AppColors.status.error.background }]}>
-                    <IconSymbol name="xmark.circle.fill" size={24} color={AppColors.status.error.main} />
+                  <View style={[styles.reportStatIcon, { backgroundColor: colors.status.error.background }]}>
+                    <IconSymbol name="xmark.circle.fill" size={24} color={colors.status.error.main} />
                   </View>
                   <View style={styles.reportStatInfo}>
-                    <Text style={styles.reportStatLabel}>Absent</Text>
-                    <Text style={styles.reportStatDescription}>Students who missed today</Text>
+                    <Text style={[styles.reportStatLabel, { color: colors.text.primary }]}>Absent</Text>
+                    <Text style={[styles.reportStatDescription, { color: colors.text.secondary }]}>Students who missed today</Text>
                   </View>
                 </View>
-                <Text style={[styles.reportStatNumber, { color: AppColors.status.error.main }]}>
+                <Text style={[styles.reportStatNumber, { color: colors.status.error.main }]}>
                   {todayAttendance.absent}
                 </Text>
               </View>
@@ -364,7 +366,7 @@ export default function DashboardScreen() {
 
             {/* Class-wise Breakdown */}
             <View style={styles.reportSection}>
-              <Text style={styles.reportSectionTitle}>📚 Class-wise Breakdown</Text>
+              <Text style={[styles.reportSectionTitle, { color: colors.text.primary }]}>📚 Class-wise Breakdown</Text>
               
               {[
                 { class: 'Grade 10A', present: 30, total: 32, percentage: 94 },
@@ -373,56 +375,36 @@ export default function DashboardScreen() {
                 { class: 'Grade 11B', present: 24, total: 26, percentage: 92 },
                 { class: 'Grade 12A', present: 22, total: 24, percentage: 92 },
               ].map((item, index) => (
-                <View key={index} style={styles.classBreakdownCard}>
+                <View key={index} style={[styles.classBreakdownCard, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}>
                   <View style={styles.classBreakdownHeader}>
-                    <Text style={styles.classBreakdownName}>{item.class}</Text>
+                    <Text style={[styles.classBreakdownName, { color: colors.text.primary }]}>{item.class}</Text>
                     <Text style={[
                       styles.classBreakdownPercentage,
-                      { color: item.percentage >= 90 ? AppColors.status.success.main : AppColors.status.warning.main }
+                      { color: item.percentage >= 90 ? colors.status.success.main : colors.status.warning.main }
                     ]}>
                       {item.percentage}%
                     </Text>
                   </View>
                   <View style={styles.classBreakdownStats}>
-                    <Text style={styles.classBreakdownText}>
+                    <Text style={[styles.classBreakdownText, { color: colors.text.secondary }]}>
                       Present: {item.present} / {item.total}
                     </Text>
                   </View>
-                  <View style={styles.classProgressBar}>
-                    <View style={[styles.classProgressFill, { width: `${item.percentage}%` }]} />
+                  <View style={[styles.classProgressBar, { backgroundColor: colors.ui.border }]}>
+                    <View style={[styles.classProgressFill, { width: `${item.percentage}%`, backgroundColor: colors.primary.main }]} />
                   </View>
                 </View>
               ))}
-            </View>
-
-            {/* Insights */}
-            <View style={styles.reportSection}>
-              <Text style={styles.reportSectionTitle}>💡 Insights</Text>
-              <View style={styles.insightCard}>
-                <Text style={styles.insightText}>
-                  ✅ Excellent attendance rate of 92% today!
-                </Text>
-              </View>
-              <View style={styles.insightCard}>
-                <Text style={styles.insightText}>
-                  📈 This is 3% higher than last week's average.
-                </Text>
-              </View>
-              <View style={styles.insightCard}>
-                <Text style={styles.insightText}>
-                  🎯 Grade 10A has the best attendance (94%).
-                </Text>
-              </View>
             </View>
           </ScrollView>
 
           {/* Close Button */}
           <TouchableOpacity
-            style={styles.reportCloseButton}
+            style={[styles.reportCloseButton, { backgroundColor: colors.background.secondary, borderColor: colors.ui.border }]}
             onPress={() => setShowReportModal(false)}
             activeOpacity={0.8}
           >
-            <Text style={styles.reportCloseButtonText}>Close Report</Text>
+            <Text style={[styles.reportCloseButtonText, { color: colors.text.primary }]}>Close Report</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -436,15 +418,15 @@ export default function DashboardScreen() {
       animationType="slide"
       onRequestClose={() => setShowNotifications(false)}
     >
-      <View style={styles.modalOverlay}>
-        <View style={styles.notificationModal}>
-          <View style={styles.notificationHeader}>
-            <Text style={styles.notificationTitle}>Notifications</Text>
+      <View style={[styles.modalOverlay, { backgroundColor: colors.ui.overlay }]}>
+        <View style={[styles.notificationModal, { backgroundColor: colors.background.primary }]}>
+          <View style={[styles.notificationHeader, { borderBottomColor: colors.ui.divider }]}>
+            <Text style={[styles.notificationTitle, { color: colors.text.primary }]}>Notifications</Text>
             <TouchableOpacity
               onPress={() => setShowNotifications(false)}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <IconSymbol name="xmark" size={24} color={AppColors.text.secondary} />
+              <IconSymbol name="xmark" size={24} color={colors.text.secondary} />
             </TouchableOpacity>
           </View>
 
@@ -454,7 +436,8 @@ export default function DashboardScreen() {
                 key={notification.id}
                 style={[
                   styles.notificationItem,
-                  !notification.read && styles.notificationItemUnread,
+                  { backgroundColor: notification.read ? 'transparent' : (isDark ? colors.background.secondary : '#F0F9FF') },
+                  { borderBottomColor: colors.ui.divider }
                 ]}
                 onPress={() => markNotificationAsRead(notification.id)}
                 activeOpacity={0.7}
@@ -463,9 +446,9 @@ export default function DashboardScreen() {
                   styles.notificationIcon,
                   {
                     backgroundColor:
-                      notification.type === 'warning' ? AppColors.status.warning.background :
-                      notification.type === 'success' ? AppColors.status.success.background :
-                      AppColors.status.info.background,
+                      notification.type === 'warning' ? colors.status.warning.background :
+                      notification.type === 'success' ? colors.status.success.background :
+                      colors.status.info.background,
                   },
                 ]}>
                   <IconSymbol
@@ -476,29 +459,29 @@ export default function DashboardScreen() {
                     }
                     size={20}
                     color={
-                      notification.type === 'warning' ? AppColors.status.warning.main :
-                      notification.type === 'success' ? AppColors.status.success.main :
-                      AppColors.status.info.main
+                      notification.type === 'warning' ? colors.status.warning.main :
+                      notification.type === 'success' ? colors.status.success.main :
+                      colors.status.info.main
                     }
                   />
                 </View>
                 <View style={styles.notificationContent}>
                   <View style={styles.notificationTop}>
-                    <Text style={styles.notificationItemTitle}>{notification.title}</Text>
-                    {!notification.read && <View style={styles.unreadDot} />}
+                    <Text style={[styles.notificationItemTitle, { color: colors.text.primary }]}>{notification.title}</Text>
+                    {!notification.read && <View style={[styles.unreadDot, { backgroundColor: colors.primary.main }]} />}
                   </View>
-                  <Text style={styles.notificationMessage}>{notification.message}</Text>
-                  <Text style={styles.notificationTime}>{notification.time}</Text>
+                  <Text style={[styles.notificationMessage, { color: colors.text.secondary }]}>{notification.message}</Text>
+                  <Text style={[styles.notificationTime, { color: colors.text.tertiary }]}>{notification.time}</Text>
                 </View>
               </TouchableOpacity>
             ))}
           </ScrollView>
 
           <TouchableOpacity
-            style={styles.markAllButton}
+            style={[styles.markAllButton, { backgroundColor: colors.background.secondary, borderTopColor: colors.ui.border }]}
             onPress={() => setNotifications(prev => prev.map(n => ({ ...n, read: true })))}
           >
-            <Text style={styles.markAllButtonText}>Mark All as Read</Text>
+            <Text style={[styles.markAllButtonText, { color: colors.primary.main }]}>Mark All as Read</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -506,21 +489,21 @@ export default function DashboardScreen() {
   );
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background.primary }]} contentContainerStyle={styles.scrollContent}>
       {/* Header Section */}
-      <View style={styles.header}>
+      <View style={[styles.header, { backgroundColor: colors.primary.main, shadowColor: colors.primary.main }]}>
         <View style={styles.headerLeft}>
-          <Text style={styles.headerGreeting}>Good Morning! 👋</Text>
-          <Text style={styles.headerName}>{teacherName}</Text>
+          <Text style={[styles.headerGreeting, { color: colors.primary.contrast }]}>Good Morning! 👋</Text>
+          <Text style={[styles.headerName, { color: colors.primary.contrast }]}>{teacherName}</Text>
         </View>
         <TouchableOpacity
           style={styles.notificationButton}
           onPress={() => setShowNotifications(true)}
           activeOpacity={0.7}
         >
-          <IconSymbol name="bell.fill" size={24} color={AppColors.primary.contrast} />
+          <IconSymbol name="bell.fill" size={24} color={colors.primary.contrast} />
           {unreadCount > 0 && (
-            <View style={styles.notificationBadge}>
+            <View style={[styles.notificationBadge, { backgroundColor: colors.status.error.main }]}>
               <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
             </View>
           )}
@@ -529,115 +512,115 @@ export default function DashboardScreen() {
 
       {/* Quick Stats Row - With Animated Counters */}
       <View style={styles.statsSection}>
-        <Text style={styles.sectionTitle}>Overview</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Overview</Text>
         <View style={styles.statsGrid}>
           {/* Total Students */}
           <TouchableOpacity
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: colors.background.secondary, shadowColor: colors.ui.shadow }]}
             onPress={() => handleStatCard('students')}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: AppColors.primary.main + '20' }]}>
-              <IconSymbol name="person.3.fill" size={24} color={AppColors.primary.main} />
+            <View style={[styles.statIconContainer, { backgroundColor: colors.primary.main + '20' }]}>
+              <IconSymbol name="person.3.fill" size={24} color={colors.primary.main} />
             </View>
-            <Text style={styles.statNumber}>{displayStudents}</Text>
-            <Text style={styles.statLabel}>Total Students</Text>
+            <Text style={[styles.statNumber, { color: colors.text.primary }]}>{displayStudents}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Total Students</Text>
           </TouchableOpacity>
 
           {/* Today's Attendance */}
           <TouchableOpacity
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: colors.background.secondary, shadowColor: colors.ui.shadow }]}
             onPress={() => handleStatCard('attendance')}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: AppColors.status.success.main + '20' }]}>
-              <IconSymbol name="checkmark.circle.fill" size={24} color={AppColors.status.success.main} />
+            <View style={[styles.statIconContainer, { backgroundColor: colors.status.success.main + '20' }]}>
+              <IconSymbol name="checkmark.circle.fill" size={24} color={colors.status.success.main} />
             </View>
-            <Text style={styles.statNumber}>{displayAttendance}%</Text>
-            <Text style={styles.statLabel}>Today's Attendance</Text>
+            <Text style={[styles.statNumber, { color: colors.text.primary }]}>{displayAttendance}%</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Today's Attendance</Text>
           </TouchableOpacity>
 
           {/* Pending Tasks */}
           <TouchableOpacity
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: colors.background.secondary, shadowColor: colors.ui.shadow }]}
             onPress={() => handleStatCard('tasks')}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: AppColors.status.warning.main + '20' }]}>
-              <IconSymbol name="doc.text.fill" size={24} color={AppColors.status.warning.main} />
+            <View style={[styles.statIconContainer, { backgroundColor: colors.status.warning.main + '20' }]}>
+              <IconSymbol name="doc.text.fill" size={24} color={colors.status.warning.main} />
             </View>
-            <Text style={styles.statNumber}>{displayTasks}</Text>
-            <Text style={styles.statLabel}>Pending Tasks</Text>
+            <Text style={[styles.statNumber, { color: colors.text.primary }]}>{displayTasks}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Pending Tasks</Text>
           </TouchableOpacity>
 
           {/* Upcoming Deadlines */}
           <TouchableOpacity
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: colors.background.secondary, shadowColor: colors.ui.shadow }]}
             onPress={() => handleStatCard('deadlines')}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: AppColors.status.error.main + '20' }]}>
-              <IconSymbol name="clock.fill" size={24} color={AppColors.status.error.main} />
+            <View style={[styles.statIconContainer, { backgroundColor: colors.status.error.main + '20' }]}>
+              <IconSymbol name="clock.fill" size={24} color={colors.status.error.main} />
             </View>
-            <Text style={styles.statNumber}>{displayDeadlines}</Text>
-            <Text style={styles.statLabel}>Upcoming Deadlines</Text>
+            <Text style={[styles.statNumber, { color: colors.text.primary }]}>{displayDeadlines}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Upcoming Deadlines</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Today's Schedule Card - Next Class */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Next Class</Text>
-        <View style={styles.scheduleCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Next Class</Text>
+        <View style={[styles.scheduleCard, { backgroundColor: colors.background.secondary, shadowColor: colors.ui.shadow }]}>
           <View style={styles.scheduleHeader}>
             <View style={styles.scheduleHeaderLeft}>
-              <Text style={styles.scheduleSubject}>{nextClass.subject}</Text>
-              <Text style={styles.scheduleGrade}>{nextClass.grade}</Text>
+              <Text style={[styles.scheduleSubject, { color: colors.text.primary }]}>{nextClass.subject}</Text>
+              <Text style={[styles.scheduleGrade, { color: colors.text.secondary }]}>{nextClass.grade}</Text>
             </View>
-            <View style={styles.scheduleTimeContainer}>
-              <IconSymbol name="clock" size={16} color={AppColors.text.secondary} />
-              <Text style={styles.scheduleTime}>{nextClass.time}</Text>
+            <View style={[styles.scheduleTimeContainer, { backgroundColor: isDark ? colors.background.tertiary : '#F0F0F0' }]}>
+              <IconSymbol name="clock" size={16} color={colors.text.secondary} />
+              <Text style={[styles.scheduleTime, { color: colors.text.secondary }]}>{nextClass.time}</Text>
             </View>
           </View>
 
-          <View style={styles.scheduleDivider} />
+          <View style={[styles.scheduleDivider, { backgroundColor: colors.ui.divider }]} />
 
           <View style={styles.scheduleDetails}>
             <View style={styles.scheduleDetailRow}>
-              <IconSymbol name="location.fill" size={18} color={AppColors.primary.main} />
-              <Text style={styles.scheduleDetailText}>{nextClass.room}</Text>
+              <IconSymbol name="location.fill" size={18} color={colors.primary.main} />
+              <Text style={[styles.scheduleDetailText, { color: colors.text.secondary }]}>{nextClass.room}</Text>
             </View>
             <View style={styles.scheduleDetailRow}>
-              <IconSymbol name="person.2.fill" size={18} color={AppColors.primary.main} />
-              <Text style={styles.scheduleDetailText}>{nextClass.studentsCount} Students</Text>
+              <IconSymbol name="person.2.fill" size={18} color={colors.primary.main} />
+              <Text style={[styles.scheduleDetailText, { color: colors.text.secondary }]}>{nextClass.studentsCount} Students</Text>
             </View>
           </View>
 
           <TouchableOpacity
-            style={styles.quickAttendanceButton}
+            style={[styles.quickAttendanceButton, { backgroundColor: colors.primary.main }]}
             onPress={handleQuickAttendance}
             activeOpacity={0.8}
           >
-            <IconSymbol name="checkmark.circle.fill" size={20} color={AppColors.primary.contrast} />
-            <Text style={styles.quickAttendanceButtonText}>Quick Attendance</Text>
+            <IconSymbol name="checkmark.circle.fill" size={20} color={colors.primary.contrast} />
+            <Text style={[styles.quickAttendanceButtonText, { color: colors.primary.contrast }]}>Quick Attendance</Text>
           </TouchableOpacity>
         </View>
       </View>
 
       {/* Attendance Summary */}
       <View style={[styles.section, styles.lastSection]}>
-        <Text style={styles.sectionTitle}>Today's Attendance Summary</Text>
-        <View style={styles.attendanceCard}>
+        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Today's Attendance Summary</Text>
+        <View style={[styles.attendanceCard, { backgroundColor: colors.background.secondary, shadowColor: colors.ui.shadow }]}>
           <View style={styles.attendanceProgressContainer}>
-            <View style={styles.attendanceProgressBackground}>
+            <View style={[styles.attendanceProgressBackground, { backgroundColor: colors.ui.border }]}>
               <View 
                 style={[
                   styles.attendanceProgressFill, 
-                  { width: `${(todayAttendance.present / todayAttendance.total) * 100}%` }
+                  { width: `${(todayAttendance.present / todayAttendance.total) * 100}%`, backgroundColor: colors.status.success.main }
                 ]} 
               />
             </View>
-            <Text style={styles.attendanceProgressText}>
+            <Text style={[styles.attendanceProgressText, { color: colors.text.secondary }]}>
               {Math.round((todayAttendance.present / todayAttendance.total) * 100)}% Present
             </Text>
           </View>
@@ -645,34 +628,34 @@ export default function DashboardScreen() {
           <View style={styles.attendanceStatsRow}>
             <View style={styles.attendanceStatItem}>
               <View style={styles.attendanceStatHeader}>
-                <View style={[styles.attendanceStatDot, { backgroundColor: AppColors.status.success.main }]} />
-                <Text style={styles.attendanceStatLabel}>Present</Text>
+                <View style={[styles.attendanceStatDot, { backgroundColor: colors.status.success.main }]} />
+                <Text style={[styles.attendanceStatLabel, { color: colors.text.secondary }]}>Present</Text>
               </View>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.status.success.main }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.status.success.main }]}>
                 {todayAttendance.present}
               </Text>
             </View>
 
-            <View style={styles.attendanceStatDivider} />
+            <View style={[styles.attendanceStatDivider, { backgroundColor: colors.ui.divider }]} />
 
             <View style={styles.attendanceStatItem}>
               <View style={styles.attendanceStatHeader}>
-                <View style={[styles.attendanceStatDot, { backgroundColor: AppColors.status.error.main }]} />
-                <Text style={styles.attendanceStatLabel}>Absent</Text>
+                <View style={[styles.attendanceStatDot, { backgroundColor: colors.status.error.main }]} />
+                <Text style={[styles.attendanceStatLabel, { color: colors.text.secondary }]}>Absent</Text>
               </View>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.status.error.main }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.status.error.main }]}>
                 {todayAttendance.absent}
               </Text>
             </View>
 
-            <View style={styles.attendanceStatDivider} />
+            <View style={[styles.attendanceStatDivider, { backgroundColor: colors.ui.divider }]} />
 
             <View style={styles.attendanceStatItem}>
               <View style={styles.attendanceStatHeader}>
-                <View style={[styles.attendanceStatDot, { backgroundColor: AppColors.primary.main }]} />
-                <Text style={styles.attendanceStatLabel}>Total</Text>
+                <View style={[styles.attendanceStatDot, { backgroundColor: colors.primary.main }]} />
+                <Text style={[styles.attendanceStatLabel, { color: colors.text.secondary }]}>Total</Text>
               </View>
-              <Text style={[styles.attendanceStatNumber, { color: AppColors.primary.main }]}>
+              <Text style={[styles.attendanceStatNumber, { color: colors.primary.main }]}>
                 {todayAttendance.total}
               </Text>
             </View>
@@ -683,8 +666,8 @@ export default function DashboardScreen() {
             onPress={() => setShowReportModal(true)}
             activeOpacity={0.7}
           >
-            <Text style={styles.viewDetailsButtonText}>View Detailed Report</Text>
-            <IconSymbol name="chevron.right" size={16} color={AppColors.primary.main} />
+            <Text style={[styles.viewDetailsButtonText, { color: colors.primary.main }]}>View Detailed Report</Text>
+            <IconSymbol name="chevron.right" size={16} color={colors.primary.main} />
           </TouchableOpacity>
         </View>
       </View>
