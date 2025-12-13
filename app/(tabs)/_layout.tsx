@@ -39,11 +39,19 @@ export default function TabLayout() {
           height: Platform.OS === 'ios' ? 88 : 60,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
+          elevation: 8,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: -2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
         },
         tabBarLabelStyle: {
           fontSize: 12,
           fontWeight: '600',
         },
+        // Add smooth animations for tab switching
+        animation: 'shift',
+        tabBarHideOnKeyboard: true,
       }}
     >
       {/* Dashboard Tab */}

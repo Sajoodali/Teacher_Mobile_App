@@ -1,7 +1,7 @@
 // Fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import { SymbolWeight, SymbolViewProps } from 'expo-symbols';
+import { SymbolViewProps, SymbolWeight } from 'expo-symbols';
 import { ComponentProps } from 'react';
 import { OpaqueColorValue, type StyleProp, type TextStyle } from 'react-native';
 
@@ -14,10 +14,54 @@ type IconSymbolName = keyof typeof MAPPING;
  * - see SF Symbols in the [SF Symbols](https://developer.apple.com/sf-symbols/) app.
  */
 const MAPPING = {
+  // Navigation & UI
   'house.fill': 'home',
   'paperplane.fill': 'send',
   'chevron.left.forwardslash.chevron.right': 'code',
   'chevron.right': 'chevron-right',
+  'chevron.down': 'keyboard-arrow-down',
+  'chevron.left': 'chevron-left',
+  'chevron.up': 'keyboard-arrow-up',
+  
+  // Tab Icons
+  'book.fill': 'menu-book',
+  'checkmark.circle.fill': 'check-circle',
+  'person.fill': 'person',
+  'person.2.fill': 'people',
+  'person.3.fill': 'groups',
+  
+  // Common Actions
+  'bell.fill': 'notifications',
+  'calendar': 'calendar-today',
+  'clock': 'access-time',
+  'clock.fill': 'schedule',
+  'location.fill': 'location-on',
+  'eye.fill': 'visibility',
+  'qrcode': 'qr-code-scanner',
+  'checkmark': 'check',
+  'xmark.circle.fill': 'cancel',
+  'paperclip': 'attach-file',
+  
+  // Documents & Files
+  'doc.text.fill': 'description',
+  'doc.fill': 'insert-drive-file',
+  'photo.fill': 'image',
+  
+  // Communication
+  'message.fill': 'message',
+  'phone.fill': 'phone',
+  'envelope.fill': 'email',
+  'bubble.left.and.bubble.right': 'chat',
+  
+  // Charts & Analytics
+  'chart.pie.fill': 'pie-chart',
+  'chart.bar.fill': 'bar-chart',
+  'graduationcap.fill': 'school',
+  
+  // Status & Feedback
+  'checkmark.seal.fill': 'verified',
+  'tray.fill': 'inbox',
+  'xmark': 'close',
 } as IconMapping;
 
 /**
