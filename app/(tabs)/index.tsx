@@ -97,13 +97,74 @@ export default function DashboardScreen() {
   const todayAttendancePercent = 92;
   const pendingTasks = 12;
   const upcomingDeadlines = 3;
-  
+
+  // Class schedule for current class detection
+  const classSchedule = [
+    {
+      id: '1',
+      className: 'Grade 10A',
+      subject: 'Mathematics',
+      startTime: '09:00',
+      endTime: '10:00',
+      room: 'Room 204',
+      studentsCount: 32,
+      dayOfWeek: 1, // Monday
+    },
+    {
+      id: '2',
+      className: 'Grade 11A',
+      subject: 'Physics',
+      startTime: '10:30',
+      endTime: '11:30',
+      room: 'Lab 305',
+      studentsCount: 30,
+      dayOfWeek: 1, // Monday
+    },
+    {
+      id: '3',
+      className: 'Grade 12A',
+      subject: 'Chemistry',
+      startTime: '13:00',
+      endTime: '14:00',
+      room: 'Lab 101',
+      studentsCount: 24,
+      dayOfWeek: 1, // Monday
+    },
+  ];
+
+  // Get current or next class
+  const getCurrentClass = () => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // Find class that matches current day and time
+    const runningClass = classSchedule.find(cls => {
+      if (cls.dayOfWeek !== currentDay) return false;
+      return currentTime >= cls.startTime && currentTime <= cls.endTime;
+    });
+
+    if (runningClass) {
+      return { ...runningClass, isLive: true };
+    }
+
+    // If no class is running, find the next class
+    const upcomingClass = classSchedule.find(cls => {
+      if (cls.dayOfWeek !== currentDay) return false;
+      return currentTime < cls.startTime;
+    });
+
+    return upcomingClass ? { ...upcomingClass, isLive: false } : { ...classSchedule[0], isLive: false };
+  };
+
+  const currentClassData = getCurrentClass();
   const nextClass = {
-    subject: 'Mathematics',
-    grade: 'Grade 10A',
-    time: '10:30 AM - 11:30 AM',
-    room: 'Room 204',
-    studentsCount: 32,
+    subject: currentClassData.subject,
+    grade: currentClassData.className,
+    time: `${currentClassData.startTime} - ${currentClassData.endTime}`,
+    room: currentClassData.room,
+    studentsCount: currentClassData.studentsCount,
+    isLive: currentClassData.isLive,
   };
 
   const todayAttendance = {

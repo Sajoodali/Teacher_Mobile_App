@@ -1,22 +1,21 @@
 /**
- * Attendance Marking Screen
+ * Attendance Tab Screen
  * 
- * Features:
- * - Header with Class Name and Date Picker
- * - Student List with Photos and Names
- * - Radio Buttons for Present/Absent/Late (with global status colors)
- * - Bulk Action: Mark All Present
- * - Floating Action Button: QR Code Scanner
+ * Optimized Features:
+ * - Automatically detects and shows current running class
+ * - Smart class selection based on current time
+ * - Quick attendance marking
+ * - Real-time stats
  */
 
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     FlatList,
     Modal,
-    Platform,
+    ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
@@ -29,40 +28,122 @@ interface Student {
   id: string;
   name: string;
   rollNumber: string;
-  photoUrl?: string;
   status: AttendanceStatus;
 }
 
-export default function AttendanceScreen() {
-  const [selectedClass] = useState('Grade 10A - Mathematics');
-  const [selectedDate, setSelectedDate] = useState(new Date());
-  const [showDatePicker, setShowDatePicker] = useState(false);
-  const [students, setStudents] = useState<Student[]>([
-    { id: '1', name: 'Ahmed Ali Khan', rollNumber: '001', status: null },
-    { id: '2', name: 'Fatima Hassan', rollNumber: '002', status: null },
-    { id: '3', name: 'Hassan Ahmed', rollNumber: '003', status: null },
-    { id: '4', name: 'Ayesha Malik', rollNumber: '004', status: null },
-    { id: '5', name: 'Usman Tariq', rollNumber: '005', status: null },
-    { id: '6', name: 'Zainab Hassan', rollNumber: '006', status: null },
-    { id: '7', name: 'Ali Raza', rollNumber: '007', status: null },
-    { id: '8', name: 'Maryam Siddiqui', rollNumber: '008', status: null },
-    { id: '9', name: 'Omar Farooq', rollNumber: '009', status: null },
-    { id: '10', name: 'Sara Khan', rollNumber: '010', status: null },
-    { id: '11', name: 'Ibrahim Ali', rollNumber: '011', status: null },
-    { id: '12', name: 'Aisha Ahmed', rollNumber: '012', status: null },
-    { id: '13', name: 'Bilal Hassan', rollNumber: '013', status: null },
-    { id: '14', name: 'Hira Malik', rollNumber: '014', status: null },
-    { id: '15', name: 'Hamza Tariq', rollNumber: '015', status: null },
-  ]);
+interface ClassSchedule {
+  id: string;
+  className: string;
+  subject: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  dayOfWeek: number; // 0 = Sunday, 1 = Monday, etc.
+}
 
-  const formatDate = (date: Date) => {
-    const options: Intl.DateTimeFormatOptions = { 
-      weekday: 'short', 
-      year: 'numeric', 
-      month: 'short', 
-      day: 'numeric' 
-    };
-    return date.toLocaleDateString('en-US', options);
+export default function AttendanceScreen() {
+  const [currentClass, setCurrentClass] = useState<ClassSchedule | null>(null);
+  const [selectedClass, setSelectedClass] = useState<ClassSchedule | null>(null);
+  const [showClassPicker, setShowClassPicker] = useState(false);
+  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [students, setStudents] = useState<Student[]>([]);
+
+  // Mock class schedule
+  const classSchedule: ClassSchedule[] = [
+    {
+      id: '1',
+      className: 'Grade 10 - Section A',
+      subject: 'Mathematics',
+      startTime: '09:00',
+      endTime: '10:00',
+      room: 'Room 204',
+      dayOfWeek: 1, // Monday
+    },
+    {
+      id: '2',
+      className: 'Grade 11 - Section A',
+      subject: 'Physics',
+      startTime: '10:30',
+      endTime: '11:30',
+      room: 'Lab 305',
+      dayOfWeek: 1, // Monday
+    },
+    {
+      id: '3',
+      className: 'Grade 12 - Section A',
+      subject: 'Chemistry',
+      startTime: '13:00',
+      endTime: '14:00',
+      room: 'Lab 101',
+      dayOfWeek: 1, // Monday
+    },
+    {
+      id: '4',
+      className: 'Grade 10 - Section B',
+      subject: 'Mathematics',
+      startTime: '14:30',
+      endTime: '15:30',
+      room: 'Room 204',
+      dayOfWeek: 1, // Monday
+    },
+  ];
+
+  // Generate mock students
+  const generateStudents = (count: number = 32): Student[] => {
+    const names = [
+      'Ahmed Ali', 'Fatima Hassan', 'Hassan Ahmed', 'Ayesha Malik',
+      'Usman Tariq', 'Zainab Hassan', 'Ali Raza', 'Maryam Siddiqui',
+      'Omar Farooq', 'Sara Khan', 'Ibrahim Ali', 'Aisha Ahmed',
+      'Bilal Hassan', 'Hira Malik', 'Hamza Tariq', 'Zara Ali',
+      'Faisal Ahmed', 'Noor Hassan', 'Kamran Ali', 'Sana Malik',
+    ];
+    
+    return Array.from({ length: count }, (_, i) => ({
+      id: `${i + 1}`,
+      name: names[i % names.length] + (i >= names.length ? ` ${Math.floor(i / names.length) + 1}` : ''),
+      rollNumber: String(i + 1).padStart(3, '0'),
+      status: null,
+    }));
+  };
+
+  // Get current running class based on time
+  const getCurrentClass = (): ClassSchedule | null => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+
+    // Find class that matches current day and time
+    const runningClass = classSchedule.find(cls => {
+      if (cls.dayOfWeek !== currentDay) return false;
+      return currentTime >= cls.startTime && currentTime <= cls.endTime;
+    });
+
+    // If no class is running, find the next class
+    if (!runningClass) {
+      const upcomingClass = classSchedule.find(cls => {
+        if (cls.dayOfWeek !== currentDay) return false;
+        return currentTime < cls.startTime;
+      });
+      return upcomingClass || classSchedule[0]; // Default to first class
+    }
+
+    return runningClass;
+  };
+
+  // Initialize with current class
+  useEffect(() => {
+    const current = getCurrentClass();
+    setCurrentClass(current);
+    setSelectedClass(current);
+    setStudents(generateStudents(32));
+  }, []);
+
+  const getInitials = (name: string) => {
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.substring(0, 2).toUpperCase();
   };
 
   const markAttendance = (studentId: string, status: AttendanceStatus) => {
@@ -74,247 +155,110 @@ export default function AttendanceScreen() {
   };
 
   const markAllPresent = () => {
-    Alert.alert(
-      'Mark All Present',
-      'Are you sure you want to mark all students as present?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Confirm',
-          onPress: () => {
-            setStudents(prev =>
-              prev.map(student => ({ ...student, status: 'present' as AttendanceStatus }))
-            );
-          },
-        },
-      ]
+    setStudents(prev =>
+      prev.map(student => ({ ...student, status: 'present' as const }))
     );
   };
 
-  const handleQRScan = () => {
-    Alert.alert(
-      'QR Code Scanner',
-      'QR Code scanning feature will be implemented here. Students can scan their ID cards for quick attendance.',
-      [{ text: 'OK' }]
-    );
+  const getStatusCounts = () => {
+    const present = students.filter(s => s.status === 'present').length;
+    const late = students.filter(s => s.status === 'late').length;
+    const absent = students.filter(s => s.status === 'absent').length;
+    const unmarked = students.filter(s => s.status === null).length;
+    return { present, late, absent, unmarked };
   };
 
   const submitAttendance = () => {
-    const unmarked = students.filter(s => s.status === null).length;
+    const counts = getStatusCounts();
     
-    if (unmarked > 0) {
+    if (counts.unmarked > 0) {
       Alert.alert(
         'Incomplete Attendance',
-        `${unmarked} student(s) not marked. Continue anyway?`,
+        `${counts.unmarked} student(s) not marked. Continue anyway?`,
         [
           { text: 'Cancel', style: 'cancel' },
           {
             text: 'Submit',
             onPress: () => {
-              Alert.alert('Success', 'Attendance submitted successfully!');
+              Alert.alert(
+                '✅ Success',
+                `Attendance submitted for ${selectedClass?.className}!\n\nPresent: ${counts.present}\nLate: ${counts.late}\nAbsent: ${counts.absent}`
+              );
             },
           },
         ]
       );
     } else {
-      Alert.alert('Success', 'Attendance submitted successfully!');
+      Alert.alert(
+        '✅ Success',
+        `Attendance submitted for ${selectedClass?.className}!\n\nPresent: ${counts.present}\nLate: ${counts.late}\nAbsent: ${counts.absent}`
+      );
     }
   };
 
-  const getStatusCounts = () => {
-    const present = students.filter(s => s.status === 'present').length;
-    const absent = students.filter(s => s.status === 'absent').length;
-    const late = students.filter(s => s.status === 'late').length;
-    const unmarked = students.filter(s => s.status === null).length;
-    return { present, absent, late, unmarked };
-  };
-
-  const counts = getStatusCounts();
-
-  const getInitials = (name: string) => {
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-      return (parts[0][0] + parts[1][0]).toUpperCase();
-    }
-    return name.substring(0, 2).toUpperCase();
-  };
-
-  const renderStudentItem = ({ item }: { item: Student }) => (
-    <View style={styles.studentCard}>
-      {/* Student Photo/Avatar */}
-      <View style={styles.studentAvatar}>
-        <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
-      </View>
-
-      {/* Student Info */}
-      <View style={styles.studentInfo}>
-        <Text style={styles.studentName}>{item.name}</Text>
-        <Text style={styles.rollNumber}>Roll No: {item.rollNumber}</Text>
-      </View>
-
-      {/* Radio Buttons */}
-      <View style={styles.radioGroup}>
-        {/* Present */}
-        <TouchableOpacity
-          style={[
-            styles.radioButton,
-            item.status === 'present' && styles.radioButtonActivePresent,
-          ]}
-          onPress={() => markAttendance(item.id, 'present')}
-          activeOpacity={0.7}
-        >
-          <View style={[
-            styles.radioOuter,
-            { borderColor: AppColors.status.success.main },
-            item.status === 'present' && { backgroundColor: AppColors.status.success.main },
-          ]}>
-            {item.status === 'present' && (
-              <View style={styles.radioInner} />
-            )}
-          </View>
-          <Text style={[
-            styles.radioLabel,
-            item.status === 'present' && { color: AppColors.status.success.main, fontWeight: '700' },
-          ]}>
-            P
-          </Text>
-        </TouchableOpacity>
-
-        {/* Late */}
-        <TouchableOpacity
-          style={[
-            styles.radioButton,
-            item.status === 'late' && styles.radioButtonActiveLate,
-          ]}
-          onPress={() => markAttendance(item.id, 'late')}
-          activeOpacity={0.7}
-        >
-          <View style={[
-            styles.radioOuter,
-            { borderColor: AppColors.status.warning.main },
-            item.status === 'late' && { backgroundColor: AppColors.status.warning.main },
-          ]}>
-            {item.status === 'late' && (
-              <View style={styles.radioInner} />
-            )}
-          </View>
-          <Text style={[
-            styles.radioLabel,
-            item.status === 'late' && { color: AppColors.status.warning.main, fontWeight: '700' },
-          ]}>
-            L
-          </Text>
-        </TouchableOpacity>
-
-        {/* Absent */}
-        <TouchableOpacity
-          style={[
-            styles.radioButton,
-            item.status === 'absent' && styles.radioButtonActiveAbsent,
-          ]}
-          onPress={() => markAttendance(item.id, 'absent')}
-          activeOpacity={0.7}
-        >
-          <View style={[
-            styles.radioOuter,
-            { borderColor: AppColors.status.error.main },
-            item.status === 'absent' && { backgroundColor: AppColors.status.error.main },
-          ]}>
-            {item.status === 'absent' && (
-              <View style={styles.radioInner} />
-            )}
-          </View>
-          <Text style={[
-            styles.radioLabel,
-            item.status === 'absent' && { color: AppColors.status.error.main, fontWeight: '700' },
-          ]}>
-            A
-          </Text>
-        </TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const DatePickerModal = () => {
-    const dates = Array.from({ length: 7 }, (_, i) => {
-      const date = new Date();
-      date.setDate(date.getDate() - i);
-      return date;
-    });
-
-    return (
-      <Modal
-        visible={showDatePicker}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
-          onPress={() => setShowDatePicker(false)}
-        >
-          <View style={styles.datePickerContent}>
-            <Text style={styles.datePickerTitle}>Select Date</Text>
-            {dates.map((date, index) => (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.dateOption,
-                  date.toDateString() === selectedDate.toDateString() && styles.dateOptionSelected,
-                ]}
-                onPress={() => {
-                  setSelectedDate(date);
-                  setShowDatePicker(false);
-                }}
-              >
-                <Text style={[
-                  styles.dateOptionText,
-                  date.toDateString() === selectedDate.toDateString() && styles.dateOptionTextSelected,
-                ]}>
-                  {formatDate(date)}
-                </Text>
-                {date.toDateString() === selectedDate.toDateString() && (
-                  <IconSymbol name="checkmark" size={20} color={AppColors.primary.main} />
-                )}
-              </TouchableOpacity>
-            ))}
-          </View>
-        </TouchableOpacity>
-      </Modal>
+  const handleQRScan = () => {
+    Alert.alert(
+      '📱 QR Code Scanner',
+      'QR code scanner will open here.\n\nStudents can scan their ID cards for quick attendance marking.',
+      [{ text: 'OK' }]
     );
   };
 
+  const counts = getStatusCounts();
+  const isCurrentClass = currentClass?.id === selectedClass?.id;
+
   return (
     <View style={styles.container}>
-      {/* Header Section */}
+      {/* Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View style={styles.headerLeft}>
-            <Text style={styles.className}>{selectedClass}</Text>
-            <TouchableOpacity
-              style={styles.dateButton}
-              onPress={() => setShowDatePicker(true)}
-            >
-              <IconSymbol name="calendar" size={16} color={AppColors.primary.main} />
-              <Text style={styles.dateText}>{formatDate(selectedDate)}</Text>
-              <IconSymbol name="chevron.down" size={14} color={AppColors.text.secondary} />
-            </TouchableOpacity>
+            <Text style={styles.headerTitle}>Take Attendance</Text>
+            {selectedClass && (
+              <Text style={styles.headerSubtitle}>{selectedClass.className}</Text>
+            )}
           </View>
+          <TouchableOpacity
+            style={styles.qrButton}
+            onPress={handleQRScan}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="qrcode" size={24} color={AppColors.primary.contrast} />
+          </TouchableOpacity>
         </View>
 
-        {/* Bulk Action Button */}
+        {/* Current Class Indicator */}
+        {isCurrentClass && currentClass && (
+          <View style={styles.currentClassBanner}>
+            <View style={styles.currentClassDot} />
+            <Text style={styles.currentClassText}>
+              🔴 LIVE NOW: {currentClass.startTime} - {currentClass.endTime}
+            </Text>
+          </View>
+        )}
+
+        {/* Class Selector */}
         <TouchableOpacity
-          style={styles.markAllButton}
-          onPress={markAllPresent}
+          style={styles.classSelector}
+          onPress={() => setShowClassPicker(true)}
           activeOpacity={0.7}
         >
-          <IconSymbol name="checkmark.circle.fill" size={20} color={AppColors.primary.contrast} />
-          <Text style={styles.markAllButtonText}>Mark All Present</Text>
+          <View style={styles.classSelectorLeft}>
+            <IconSymbol name="book.fill" size={20} color={AppColors.primary.main} />
+            <View style={styles.classSelectorText}>
+              <Text style={styles.classSelectorTitle}>
+                {selectedClass?.subject || 'Select Class'}
+              </Text>
+              <Text style={styles.classSelectorSubtitle}>
+                {selectedClass?.room} • {selectedClass?.startTime}
+              </Text>
+            </View>
+          </View>
+          <IconSymbol name="chevron.down" size={20} color={AppColors.text.secondary} />
         </TouchableOpacity>
       </View>
 
-      {/* Stats Summary */}
+      {/* Stats */}
       <View style={styles.statsContainer}>
         <View style={[styles.statBox, { backgroundColor: AppColors.status.success.background }]}>
           <Text style={[styles.statNumber, { color: AppColors.status.success.main }]}>
@@ -350,13 +294,107 @@ export default function AttendanceScreen() {
         </View>
       </View>
 
+      {/* Mark All Button */}
+      <View style={styles.markAllContainer}>
+        <TouchableOpacity
+          style={styles.markAllButton}
+          onPress={markAllPresent}
+          activeOpacity={0.7}
+        >
+          <IconSymbol name="checkmark.circle.fill" size={20} color={AppColors.primary.contrast} />
+          <Text style={styles.markAllButtonText}>Mark All Present</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Student List */}
       <FlatList
         data={students}
-        renderItem={renderStudentItem}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={styles.listContent}
-        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.studentList}
+        renderItem={({ item }) => (
+          <View style={styles.studentCard}>
+            <View style={styles.studentInfo}>
+              <View style={styles.studentAvatar}>
+                <Text style={styles.avatarText}>{getInitials(item.name)}</Text>
+              </View>
+              <View style={styles.studentDetails}>
+                <Text style={styles.studentName}>{item.name}</Text>
+                <Text style={styles.studentRoll}>Roll No: {item.rollNumber}</Text>
+              </View>
+            </View>
+
+            <View style={styles.radioGroup}>
+              {/* Present */}
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => markAttendance(item.id, 'present')}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.radioOuter,
+                  { borderColor: AppColors.status.success.main },
+                  item.status === 'present' && { backgroundColor: AppColors.status.success.main },
+                ]}>
+                  {item.status === 'present' && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <Text style={[
+                  styles.radioLabel,
+                  item.status === 'present' && { color: AppColors.status.success.main, fontWeight: '700' },
+                ]}>
+                  P
+                </Text>
+              </TouchableOpacity>
+
+              {/* Late */}
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => markAttendance(item.id, 'late')}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.radioOuter,
+                  { borderColor: AppColors.status.warning.main },
+                  item.status === 'late' && { backgroundColor: AppColors.status.warning.main },
+                ]}>
+                  {item.status === 'late' && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <Text style={[
+                  styles.radioLabel,
+                  item.status === 'late' && { color: AppColors.status.warning.main, fontWeight: '700' },
+                ]}>
+                  L
+                </Text>
+              </TouchableOpacity>
+
+              {/* Absent */}
+              <TouchableOpacity
+                style={styles.radioButton}
+                onPress={() => markAttendance(item.id, 'absent')}
+                activeOpacity={0.7}
+              >
+                <View style={[
+                  styles.radioOuter,
+                  { borderColor: AppColors.status.error.main },
+                  item.status === 'absent' && { backgroundColor: AppColors.status.error.main },
+                ]}>
+                  {item.status === 'absent' && (
+                    <View style={styles.radioInner} />
+                  )}
+                </View>
+                <Text style={[
+                  styles.radioLabel,
+                  item.status === 'absent' && { color: AppColors.status.error.main, fontWeight: '700' },
+                ]}>
+                  A
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
       />
 
       {/* Submit Button */}
@@ -371,17 +409,68 @@ export default function AttendanceScreen() {
         </TouchableOpacity>
       </View>
 
-      {/* Floating Action Button - QR Scanner */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={handleQRScan}
-        activeOpacity={0.8}
+      {/* Class Picker Modal */}
+      <Modal
+        visible={showClassPicker}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setShowClassPicker(false)}
       >
-        <IconSymbol name="qrcode" size={28} color={AppColors.primary.contrast} />
-      </TouchableOpacity>
+        <View style={styles.modalOverlay}>
+          <View style={styles.pickerModal}>
+            <View style={styles.pickerHeader}>
+              <Text style={styles.pickerTitle}>Select Class</Text>
+              <TouchableOpacity
+                onPress={() => setShowClassPicker(false)}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <IconSymbol name="xmark" size={24} color={AppColors.text.secondary} />
+              </TouchableOpacity>
+            </View>
 
-      {/* Date Picker Modal */}
-      <DatePickerModal />
+            <ScrollView style={styles.pickerList}>
+              {classSchedule.map((cls) => {
+                const isCurrent = currentClass?.id === cls.id;
+                const isSelected = selectedClass?.id === cls.id;
+
+                return (
+                  <TouchableOpacity
+                    key={cls.id}
+                    style={[
+                      styles.pickerItem,
+                      isSelected && styles.pickerItemSelected,
+                    ]}
+                    onPress={() => {
+                      setSelectedClass(cls);
+                      setShowClassPicker(false);
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <View style={styles.pickerItemLeft}>
+                      <View style={styles.pickerItemHeader}>
+                        <Text style={styles.pickerItemTitle}>{cls.className}</Text>
+                        {isCurrent && (
+                          <View style={styles.liveBadge}>
+                            <View style={styles.liveDot} />
+                            <Text style={styles.liveText}>LIVE</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={styles.pickerItemSubject}>{cls.subject}</Text>
+                      <Text style={styles.pickerItemTime}>
+                        {cls.room} • {cls.startTime} - {cls.endTime}
+                      </Text>
+                    </View>
+                    {isSelected && (
+                      <IconSymbol name="checkmark" size={24} color={AppColors.primary.main} />
+                    )}
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -394,62 +483,90 @@ const styles = StyleSheet.create({
 
   // Header
   header: {
-    backgroundColor: AppColors.background.secondary,
+    backgroundColor: AppColors.primary.main,
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.ui.border,
   },
   headerTop: {
-    marginBottom: Spacing.md,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: Spacing.sm,
   },
   headerLeft: {
     flex: 1,
   },
-  className: {
+  headerTitle: {
     fontSize: FontSizes.xl,
     fontWeight: '700',
-    color: AppColors.text.primary,
-    marginBottom: Spacing.sm,
+    color: AppColors.primary.contrast,
   },
-  dateButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: AppColors.ui.card,
-    paddingHorizontal: Spacing.md,
-    paddingVertical: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    borderColor: AppColors.ui.border,
-    gap: Spacing.xs,
-    alignSelf: 'flex-start',
+  headerSubtitle: {
+    fontSize: FontSizes.base,
+    color: AppColors.primary.contrast,
+    opacity: 0.9,
+    marginTop: 2,
   },
-  dateText: {
-    fontSize: FontSizes.sm,
-    fontWeight: '600',
-    color: AppColors.text.primary,
-  },
-  markAllButton: {
-    flexDirection: 'row',
+  qrButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: AppColors.status.success.main,
-    paddingVertical: Spacing.sm,
-    paddingHorizontal: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.xs,
-    // Shadow
-    shadowColor: AppColors.status.success.main,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
-    elevation: 3,
   },
-  markAllButtonText: {
-    fontSize: FontSizes.base,
+
+  // Current Class Banner
+  currentClassBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.xs,
+    borderRadius: BorderRadius.md,
+    marginBottom: Spacing.sm,
+    gap: Spacing.xs,
+  },
+  currentClassDot: {
+    width: 8,
+    height: 8,
+    borderRadius: BorderRadius.full,
+    backgroundColor: '#FF4444',
+  },
+  currentClassText: {
+    fontSize: FontSizes.sm,
     fontWeight: '600',
     color: AppColors.primary.contrast,
+  },
+
+  // Class Selector
+  classSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: AppColors.ui.card,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.md,
+  },
+  classSelectorLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    flex: 1,
+  },
+  classSelectorText: {
+    flex: 1,
+  },
+  classSelectorTitle: {
+    fontSize: FontSizes.base,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+  },
+  classSelectorSubtitle: {
+    fontSize: FontSizes.sm,
+    color: AppColors.text.secondary,
+    marginTop: 2,
   },
 
   // Stats
@@ -474,32 +591,61 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // List
-  listContent: {
+  // Mark All
+  markAllContainer: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.md,
+  },
+  markAllButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: AppColors.status.success.main,
+    paddingVertical: Spacing.sm,
+    paddingHorizontal: Spacing.md,
+    borderRadius: BorderRadius.md,
+    gap: Spacing.xs,
+    shadowColor: AppColors.status.success.main,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  markAllButtonText: {
+    fontSize: FontSizes.base,
+    fontWeight: '600',
+    color: AppColors.primary.contrast,
+  },
+
+  // Student List
+  studentList: {
     paddingHorizontal: Spacing.lg,
     paddingBottom: Spacing.xl,
   },
-
-  // Student Card
   studentCard: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
     backgroundColor: AppColors.ui.card,
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.sm,
     borderWidth: 1,
     borderColor: AppColors.ui.border,
-    // Shadow
     shadowColor: AppColors.ui.shadow,
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
+  studentInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
   studentAvatar: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     borderRadius: BorderRadius.full,
     backgroundColor: AppColors.primary.main,
     alignItems: 'center',
@@ -507,11 +653,11 @@ const styles = StyleSheet.create({
     marginRight: Spacing.md,
   },
   avatarText: {
-    fontSize: FontSizes.lg,
+    fontSize: FontSizes.base,
     fontWeight: 'bold',
     color: AppColors.primary.contrast,
   },
-  studentInfo: {
+  studentDetails: {
     flex: 1,
   },
   studentName: {
@@ -520,7 +666,7 @@ const styles = StyleSheet.create({
     color: AppColors.text.primary,
     marginBottom: 2,
   },
-  rollNumber: {
+  studentRoll: {
     fontSize: FontSizes.sm,
     color: AppColors.text.secondary,
   },
@@ -533,15 +679,6 @@ const styles = StyleSheet.create({
   radioButton: {
     alignItems: 'center',
     gap: 4,
-  },
-  radioButtonActivePresent: {
-    // Additional styling when present is selected
-  },
-  radioButtonActiveLate: {
-    // Additional styling when late is selected
-  },
-  radioButtonActiveAbsent: {
-    // Additional styling when absent is selected
   },
   radioOuter: {
     width: 28,
@@ -578,7 +715,6 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.md,
     borderRadius: BorderRadius.md,
     gap: Spacing.sm,
-    // Shadow
     shadowColor: AppColors.primary.main,
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
@@ -591,64 +727,86 @@ const styles = StyleSheet.create({
     color: AppColors.primary.contrast,
   },
 
-  // Floating Action Button
-  fab: {
-    position: 'absolute',
-    right: Spacing.lg,
-    bottom: Platform.OS === 'ios' ? 100 : 80,
-    width: 64,
-    height: 64,
-    borderRadius: BorderRadius.full,
-    backgroundColor: AppColors.secondary.main,
-    alignItems: 'center',
-    justifyContent: 'center',
-    // Shadow
-    shadowColor: AppColors.secondary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-
-  // Date Picker Modal
+  // Modal
   modalOverlay: {
     flex: 1,
     backgroundColor: AppColors.ui.overlay,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: 'flex-end',
   },
-  datePickerContent: {
+  pickerModal: {
     backgroundColor: AppColors.ui.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    width: '85%',
+    borderTopLeftRadius: BorderRadius.xl,
+    borderTopRightRadius: BorderRadius.xl,
     maxHeight: '70%',
   },
-  datePickerTitle: {
-    fontSize: FontSizes.xl,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    marginBottom: Spacing.md,
-  },
-  dateOption: {
+  pickerHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingVertical: Spacing.md,
-    paddingHorizontal: Spacing.sm,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.xs,
+    padding: Spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.ui.border,
   },
-  dateOptionSelected: {
+  pickerTitle: {
+    fontSize: FontSizes.xl,
+    fontWeight: '700',
+    color: AppColors.text.primary,
+  },
+  pickerList: {
+    maxHeight: 400,
+  },
+  pickerItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: Spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: AppColors.ui.divider,
+  },
+  pickerItemSelected: {
     backgroundColor: AppColors.background.secondary,
   },
-  dateOptionText: {
+  pickerItemLeft: {
+    flex: 1,
+  },
+  pickerItemHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.sm,
+    marginBottom: 4,
+  },
+  pickerItemTitle: {
+    fontSize: FontSizes.base,
+    fontWeight: '600',
+    color: AppColors.text.primary,
+  },
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF4444',
+    paddingHorizontal: Spacing.xs,
+    paddingVertical: 2,
+    borderRadius: BorderRadius.sm,
+    gap: 4,
+  },
+  liveDot: {
+    width: 6,
+    height: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: AppColors.primary.contrast,
+  },
+  liveText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: AppColors.primary.contrast,
+  },
+  pickerItemSubject: {
     fontSize: FontSizes.base,
     color: AppColors.text.primary,
-    fontWeight: '500',
+    marginBottom: 2,
   },
-  dateOptionTextSelected: {
-    color: AppColors.primary.main,
-    fontWeight: '700',
+  pickerItemTime: {
+    fontSize: FontSizes.sm,
+    color: AppColors.text.secondary,
   },
 });
