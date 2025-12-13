@@ -5,7 +5,7 @@ import React from 'react';
 import { Platform } from 'react-native';
 
 export default function TabLayout() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
@@ -22,16 +22,16 @@ export default function TabLayout() {
           fontWeight: '600',
         },
         tabBarStyle: {
-          backgroundColor: colors.background.primary,
+          backgroundColor: colors.background.secondary, // Use secondary for tab bar
           borderTopColor: colors.ui.border,
           borderTopWidth: 1,
           height: Platform.OS === 'ios' ? 88 : 60,
           paddingBottom: Platform.OS === 'ios' ? 24 : 8,
           paddingTop: 8,
           elevation: 8,
-          shadowColor: '#000',
+          shadowColor: isDark ? '#000000' : '#000000',
           shadowOffset: { width: 0, height: -2 },
-          shadowOpacity: 0.1,
+          shadowOpacity: isDark ? 0.3 : 0.1,
           shadowRadius: 8,
         },
         tabBarLabelStyle: {

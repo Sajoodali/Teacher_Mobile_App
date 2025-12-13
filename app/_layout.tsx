@@ -10,14 +10,48 @@ export const unstable_settings = {
 };
 
 function RootLayoutNav() {
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
+
+  // Custom navigation theme that matches our app theme
+  const customLightTheme = {
+    ...DefaultTheme,
+    colors: {
+      ...DefaultTheme.colors,
+      primary: colors.primary.main,
+      background: colors.background.primary,
+      card: colors.background.secondary,
+      text: colors.text.primary,
+      border: colors.ui.border,
+      notification: colors.primary.main,
+    },
+  };
+
+  const customDarkTheme = {
+    ...DarkTheme,
+    colors: {
+      ...DarkTheme.colors,
+      primary: colors.primary.main,
+      background: colors.background.primary,
+      card: colors.background.secondary,
+      text: colors.text.primary,
+      border: colors.ui.border,
+      notification: colors.primary.main,
+    },
+  };
 
   return (
-    <NavigationThemeProvider value={isDark ? DarkTheme : DefaultTheme}>
+    <NavigationThemeProvider value={isDark ? customDarkTheme : customLightTheme}>
       <Stack
         screenOptions={{
           animation: 'slide_from_right',
           animationDuration: 700,
+          headerStyle: {
+            backgroundColor: colors.background.secondary,
+          },
+          headerTintColor: colors.text.primary,
+          contentStyle: {
+            backgroundColor: colors.background.primary,
+          },
         }}
       >
         <Stack.Screen 

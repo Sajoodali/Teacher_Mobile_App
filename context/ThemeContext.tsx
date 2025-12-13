@@ -14,8 +14,8 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const systemColorScheme = useColorScheme();
-  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('system');
-  const [isDark, setIsDark] = useState(systemColorScheme === 'dark');
+  const [themeMode, setThemeMode] = useState<'light' | 'dark' | 'system'>('light'); // Default to light mode
+  const [isDark, setIsDark] = useState(false); // Start with light mode
 
   useEffect(() => {
     if (themeMode === 'system') {
@@ -32,11 +32,12 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const colors = isDark 
     ? {
         ...AppColors,
-        ...AppColors.dark, // Overlay dark mode specific colors
+        primary: AppColors.dark.primary,
+        secondary: AppColors.dark.secondary,
         background: AppColors.dark.background,
         text: AppColors.dark.text,
-        primary: AppColors.dark.primary, 
-        secondary: AppColors.dark.secondary,
+        ui: AppColors.dark.ui,
+        status: AppColors.dark.status,
       } 
     : AppColors;
 
