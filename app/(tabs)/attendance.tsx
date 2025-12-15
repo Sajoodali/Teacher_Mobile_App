@@ -13,15 +13,16 @@ import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/ThemeContext';
 import React, { useEffect, useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    Modal,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View,
+  Alert,
+  FlatList,
+  Modal,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
 } from 'react-native';
+import QRScanner from '@/components/attendance/QRScanner';
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | null;
 
@@ -47,6 +48,7 @@ export default function AttendanceScreen() {
   const [currentClass, setCurrentClass] = useState<ClassSchedule | null>(null);
   const [selectedClass, setSelectedClass] = useState<ClassSchedule | null>(null);
   const [showClassPicker, setShowClassPicker] = useState(false);
+  const [showQRScanner, setShowQRScanner] = useState(false);
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [students, setStudents] = useState<Student[]>([]);
 
@@ -199,11 +201,12 @@ export default function AttendanceScreen() {
   };
 
   const handleQRScan = () => {
-    Alert.alert(
-      '📱 QR Code Scanner',
-      'QR code scanner will open here.\n\nStudents can scan their ID cards for quick attendance marking.',
-      [{ text: 'OK' }]
-    );
+    setShowQRScanner(true);
+  };
+
+  const handleStudentScan = (studentId: string) => {
+    // Automatically mark student as present when scanned
+    markAttendance(studentId, 'present');
   };
 
   const counts = getStatusCounts();
@@ -474,6 +477,14 @@ export default function AttendanceScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* QR Scanner Modal */}
+      <QRScanner
+        visible={showQRScanner}
+        onClose={() => setShowQRScanner(false)}
+        onScan={handleStudentScan}
+        currentClassStudents={students}
+      />
     </View>
   );
 }

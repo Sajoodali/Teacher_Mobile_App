@@ -20,12 +20,12 @@ import { useTheme } from '@/context/ThemeContext';
 import { ClassItem, Student } from '@/types/classes';
 import React, { useState } from 'react';
 import {
-    Alert,
-    FlatList,
-    StyleSheet,
-    Text,
-    TouchableOpacity,
-    View
+  Alert,
+  FlatList,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View
 } from 'react-native';
 
 
@@ -377,13 +377,16 @@ export default function ClassesScreen() {
             Alert.alert(
               '📚 Select Class',
               'Choose a class to create assignment for:',
-              filteredClasses.map(cls => ({
-                text: cls.className,
-                onPress: () => {
-                  setSelectedClass(cls);
-                  setShowAssignmentForm(true);
-                }
-              })).concat([{ text: 'Cancel', style: 'cancel' }])
+              [
+                ...filteredClasses.map(cls => ({
+                  text: cls.className,
+                  onPress: () => {
+                    setSelectedClass(cls);
+                    setShowAssignmentForm(true);
+                  }
+                })),
+                { text: 'Cancel', style: 'cancel' as const }
+              ]
             );
           } else if (selectedClass) {
             setShowAssignmentForm(true);

@@ -1,11 +1,13 @@
 /**
  * Dashboard Screen (Home Tab)
  * 
- * Optimized main dashboard with:
- * - Animated counters
- * - Detailed report modal
- * - Functional quick attendance
- * - Notification system
+ * Premium Features:
+ * - Gradient header with dynamic greeting
+ * - Animated stat cards with icons
+ * - Live class indicator
+ * - Quick action shortcuts
+ * - Recent activity feed
+ * - Smooth animations and transitions
  */
 
 import { AttendanceSummaryCard } from '@/components/dashboard/AttendanceSummaryCard';
@@ -14,18 +16,23 @@ import { NotificationModal } from '@/components/dashboard/NotificationModal';
 import { ScheduleCard } from '@/components/dashboard/ScheduleCard';
 import { StatsCard } from '@/components/dashboard/StatsCard';
 import { IconSymbol } from '@/components/ui/icon-symbol';
-import { AppColors, BorderRadius, FontSizes, Spacing } from '@/constants/theme';
+import { BorderRadius, FontSizes, Spacing } from '@/constants/theme';
 import { useTheme } from '@/context/ThemeContext';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
-  Alert,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View
+    Alert,
+    Animated,
+    Dimensions,
+    ScrollView,
+    StyleSheet,
+    Text,
+    TouchableOpacity,
+    View
 } from 'react-native';
+
+const { width } = Dimensions.get('window');
 
 interface Notification {
   id: string;
@@ -36,13 +43,46 @@ interface Notification {
   read: boolean;
 }
 
+interface QuickAction {
+  id: string;
+  title: string;
+  icon: string;
+  color: string;
+  route?: string;
+  action?: () => void;
+}
+
+interface RecentActivity {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  icon: string;
+  iconColor: string;
+}
+
 export default function DashboardScreen() {
   const router = useRouter();
   const { colors, isDark } = useTheme();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showReportModal, setShowReportModal] = useState(false);
-  
+  const [fadeAnim] = useState(new Animated.Value(0));
+  const [slideAnim] = useState(new Animated.Value(50));
 
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const [notifications, setNotifications] = useState<Notification[]>([
     {
@@ -69,22 +109,6 @@ export default function DashboardScreen() {
       type: 'success',
       read: true,
     },
-    {
-      id: '4',
-      title: 'Exam Schedule',
-      message: 'Mid-term exams starting next week',
-      time: '1 day ago',
-      type: 'info',
-      read: true,
-    },
-    {
-      id: '5',
-      title: 'Grade Submission',
-      message: 'Please submit grades for Physics class',
-      time: '2 days ago',
-      type: 'warning',
-      read: true,
-    },
   ]);
 
   // Mock data
@@ -93,6 +117,14 @@ export default function DashboardScreen() {
   const todayAttendancePercent = 92;
   const pendingTasks = 12;
   const upcomingDeadlines = 3;
+
+  // Get dynamic greeting
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good Morning';
+    if (hour < 17) return 'Good Afternoon';
+    return 'Good Evening';
+  };
 
   // Class schedule for current class detection
   const classSchedule = [
@@ -104,7 +136,7 @@ export default function DashboardScreen() {
       endTime: '10:00',
       room: 'Room 204',
       studentsCount: 32,
-      dayOfWeek: 1, // Monday
+      dayOfWeek: 1,
     },
     {
       id: '2',
@@ -114,7 +146,7 @@ export default function DashboardScreen() {
       endTime: '11:30',
       room: 'Lab 305',
       studentsCount: 30,
-      dayOfWeek: 1, // Monday
+      dayOfWeek: 1,
     },
     {
       id: '3',
@@ -124,7 +156,7 @@ export default function DashboardScreen() {
       endTime: '14:00',
       room: 'Lab 101',
       studentsCount: 24,
-      dayOfWeek: 1, // Monday
+      dayOfWeek: 1,
     },
   ];
 
@@ -134,7 +166,6 @@ export default function DashboardScreen() {
     const currentDay = now.getDay();
     const currentTime = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 
-    // Find class that matches current day and time
     const runningClass = classSchedule.find(cls => {
       if (cls.dayOfWeek !== currentDay) return false;
       return currentTime >= cls.startTime && currentTime <= cls.endTime;
@@ -144,7 +175,6 @@ export default function DashboardScreen() {
       return { ...runningClass, isLive: true };
     }
 
-    // If no class is running, find the next class
     const upcomingClass = classSchedule.find(cls => {
       if (cls.dayOfWeek !== currentDay) return false;
       return currentTime < cls.startTime;
@@ -169,6 +199,66 @@ export default function DashboardScreen() {
     total: 245,
   };
 
+  // Quick Actions
+  const quickActions: QuickAction[] = [
+    {
+      id: '1',
+      title: 'Take Attendance',
+      icon: 'checkmark.circle.fill',
+      color: colors.status.success.main,
+      action: () => router.push('/(tabs)/attendance'),
+    },
+    {
+      id: '2',
+      title: 'My Classes',
+      icon: 'book.fill',
+      color: colors.primary.main,
+      action: () => router.push('/(tabs)/classes'),
+    },
+    {
+      id: '3',
+      title: 'Messages',
+      icon: 'envelope.fill',
+      color: colors.status.info.main,
+      action: () => Alert.alert('Messages', 'Opening messages...'),
+    },
+    {
+      id: '4',
+      title: 'Assignments',
+      icon: 'doc.text.fill',
+      color: colors.status.warning.main,
+      action: () => Alert.alert('Assignments', 'Opening assignments...'),
+    },
+  ];
+
+  // Recent Activities
+  const recentActivities: RecentActivity[] = [
+    {
+      id: '1',
+      title: 'Attendance Marked',
+      description: 'Grade 10A - Mathematics (32 students)',
+      time: '2 hours ago',
+      icon: 'checkmark.seal.fill',
+      iconColor: colors.status.success.main,
+    },
+    {
+      id: '2',
+      title: 'Assignment Graded',
+      description: 'Physics Quiz - Grade 11A (28 submissions)',
+      time: '4 hours ago',
+      icon: 'star.fill',
+      iconColor: colors.status.warning.main,
+    },
+    {
+      id: '3',
+      title: 'Parent Meeting',
+      description: 'Scheduled with Ahmed Ali\'s parents',
+      time: '1 day ago',
+      icon: 'person.2.fill',
+      iconColor: colors.status.info.main,
+    },
+  ];
+
   const unreadCount = notifications.filter(n => !n.read).length;
 
   const markNotificationAsRead = (id: string) => {
@@ -176,8 +266,6 @@ export default function DashboardScreen() {
       prev.map(n => n.id === id ? { ...n, read: true } : n)
     );
   };
-
-
 
   const handleQuickAttendance = () => {
     Alert.alert(
@@ -187,9 +275,7 @@ export default function DashboardScreen() {
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Start Attendance',
-          onPress: () => {
-            Alert.alert('✅ Success', 'Opening attendance screen for Grade 10A...\n\nYou can now mark attendance for all 32 students.');
-          },
+          onPress: () => router.push('/(tabs)/attendance'),
         },
       ]
     );
@@ -204,10 +290,7 @@ export default function DashboardScreen() {
         );
         break;
       case 'attendance':
-        Alert.alert(
-          '✅ Today\'s Attendance',
-          `${todayAttendancePercent}% students are present today\n\n📊 Details:\n• Present: 226 students\n• Absent: 19 students\n• Total: 245 students\n\nGreat attendance rate!`
-        );
+        setShowReportModal(true);
         break;
       case 'tasks':
         Alert.alert(
@@ -225,82 +308,195 @@ export default function DashboardScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background.primary }]} contentContainerStyle={styles.scrollContent}>
-      {/* Header Section */}
-      <View style={[styles.header, { backgroundColor: colors.primary.main, shadowColor: colors.primary.main }]}>
-        <View style={styles.headerLeft}>
-          <Text style={[styles.headerGreeting, { color: colors.primary.contrast }]}>Good Morning! 👋</Text>
-          <Text style={[styles.headerName, { color: colors.primary.contrast }]}>{teacherName}</Text>
+    <View style={[styles.container, { backgroundColor: colors.background.primary }]}>
+      {/* Gradient Header */}
+      <LinearGradient
+        colors={isDark 
+          ? [colors.primary.main, colors.primary.dark || '#1a237e']
+          : [colors.primary.main, colors.primary.light || '#5c6bc0']
+        }
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.gradientHeader}
+      >
+        <View style={styles.headerContent}>
+          <View style={styles.headerLeft}>
+            <Text style={[styles.headerGreeting, { color: colors.primary.contrast }]}>
+              {getGreeting()}! 👋
+            </Text>
+            <Text style={[styles.headerName, { color: colors.primary.contrast }]}>
+              {teacherName}
+            </Text>
+            <Text style={[styles.headerSubtitle, { color: colors.primary.contrast }]}>
+              {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+            </Text>
+          </View>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => setShowNotifications(true)}
+            activeOpacity={0.7}
+          >
+            <IconSymbol name="bell.fill" size={24} color={colors.primary.contrast} />
+            {unreadCount > 0 && (
+              <View style={[styles.notificationBadge, { backgroundColor: colors.status.error.main }]}>
+                <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
-        <TouchableOpacity
-          style={styles.notificationButton}
-          onPress={() => setShowNotifications(true)}
-          activeOpacity={0.7}
-        >
-          <IconSymbol name="bell.fill" size={24} color={colors.primary.contrast} />
-          {unreadCount > 0 && (
-            <View style={[styles.notificationBadge, { backgroundColor: colors.status.error.main }]}>
-              <Text style={styles.notificationBadgeText}>{unreadCount}</Text>
+
+        {/* Live Class Banner */}
+        {nextClass.isLive && (
+          <Animated.View 
+            style={[
+              styles.liveClassBanner,
+              { 
+                opacity: fadeAnim,
+                transform: [{ translateY: slideAnim }]
+              }
+            ]}
+          >
+            <View style={styles.liveDotContainer}>
+              <View style={[styles.liveDot, styles.liveDotPulse]} />
+              <View style={styles.liveDot} />
             </View>
-          )}
-        </TouchableOpacity>
-      </View>
+            <Text style={[styles.liveClassText, { color: colors.primary.contrast }]}>
+              LIVE NOW: {nextClass.subject} • {nextClass.room}
+            </Text>
+          </Animated.View>
+        )}
+      </LinearGradient>
 
-      {/* Quick Stats Row - With Animated Counters */}
-      <View style={styles.statsSection}>
-        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Overview</Text>
-        <View style={styles.statsGrid}>
-          <StatsCard 
-            type="students" 
-            value={totalStudents} 
-            label="Total Students" 
-            onPress={() => handleStatCard('students')} 
-          />
-          <StatsCard 
-            type="attendance" 
-            value={todayAttendancePercent} 
-            label="Today's Attendance" 
-            onPress={() => handleStatCard('attendance')} 
-            isPercentage
-          />
-          <StatsCard 
-            type="tasks" 
-            value={pendingTasks} 
-            label="Pending Tasks" 
-            onPress={() => handleStatCard('tasks')} 
-          />
-          <StatsCard 
-            type="deadlines" 
-            value={upcomingDeadlines} 
-            label="Upcoming Deadlines" 
-            onPress={() => handleStatCard('deadlines')} 
+      <ScrollView 
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Quick Stats */}
+        <Animated.View 
+          style={[
+            styles.statsSection,
+            { 
+              opacity: fadeAnim,
+              transform: [{ translateY: slideAnim }]
+            }
+          ]}
+        >
+          <View style={styles.statsGrid}>
+            <StatsCard 
+              type="students" 
+              value={totalStudents} 
+              label="Total Students" 
+              onPress={() => handleStatCard('students')} 
+            />
+            <StatsCard 
+              type="attendance" 
+              value={todayAttendancePercent} 
+              label="Today's Attendance" 
+              onPress={() => handleStatCard('attendance')} 
+              isPercentage
+            />
+            <StatsCard 
+              type="tasks" 
+              value={pendingTasks} 
+              label="Pending Tasks" 
+              onPress={() => handleStatCard('tasks')} 
+            />
+            <StatsCard 
+              type="deadlines" 
+              value={upcomingDeadlines} 
+              label="Deadlines" 
+              onPress={() => handleStatCard('deadlines')} 
+            />
+          </View>
+        </Animated.View>
+
+        {/* Quick Actions */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Quick Actions</Text>
+          <View style={styles.quickActionsGrid}>
+            {quickActions.map((action) => (
+              <TouchableOpacity
+                key={action.id}
+                style={[styles.quickActionCard, { backgroundColor: colors.ui.card, borderColor: colors.ui.border }]}
+                onPress={action.action}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.quickActionIcon, { backgroundColor: action.color + '20' }]}>
+                  <IconSymbol name={action.icon as any} size={24} color={action.color} />
+                </View>
+                <Text style={[styles.quickActionText, { color: colors.text.primary }]}>
+                  {action.title}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* Next Class Schedule */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              {nextClass.isLive ? 'Current Class' : 'Next Class'}
+            </Text>
+            {nextClass.isLive && (
+              <View style={styles.liveBadge}>
+                <View style={styles.liveBadgeDot} />
+                <Text style={styles.liveBadgeText}>LIVE</Text>
+              </View>
+            )}
+          </View>
+          <ScheduleCard
+            subject={nextClass.subject}
+            grade={nextClass.grade}
+            time={nextClass.time}
+            room={nextClass.room}
+            studentsCount={nextClass.studentsCount}
+            onQuickAttendance={handleQuickAttendance}
           />
         </View>
-      </View>
 
-      {/* Today's Schedule Card - Next Class */}
-      <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Next Class</Text>
-        <ScheduleCard
-          subject={nextClass.subject}
-          grade={nextClass.grade}
-          time={nextClass.time}
-          room={nextClass.room}
-          studentsCount={nextClass.studentsCount}
-          onQuickAttendance={handleQuickAttendance}
-        />
-      </View>
+        {/* Today's Attendance Summary */}
+        <View style={styles.section}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+            Today's Attendance
+          </Text>
+          <AttendanceSummaryCard
+            present={todayAttendance.present}
+            absent={todayAttendance.absent}
+            total={todayAttendance.total}
+            onViewDetails={() => setShowReportModal(true)}
+          />
+        </View>
 
-      {/* Attendance Summary */}
-      <View style={[styles.section, styles.lastSection]}>
-        <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Today's Attendance Summary</Text>
-        <AttendanceSummaryCard
-          present={todayAttendance.present}
-          absent={todayAttendance.absent}
-          total={todayAttendance.total}
-          onViewDetails={() => setShowReportModal(true)}
-        />
-      </View>
+        {/* Recent Activity */}
+        <View style={[styles.section, styles.lastSection]}>
+          <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Recent Activity</Text>
+          <View style={styles.activityList}>
+            {recentActivities.map((activity) => (
+              <View
+                key={activity.id}
+                style={[styles.activityItem, { backgroundColor: colors.ui.card, borderColor: colors.ui.border }]}
+              >
+                <View style={[styles.activityIcon, { backgroundColor: activity.iconColor + '20' }]}>
+                  <IconSymbol name={activity.icon as any} size={20} color={activity.iconColor} />
+                </View>
+                <View style={styles.activityContent}>
+                  <Text style={[styles.activityTitle, { color: colors.text.primary }]}>
+                    {activity.title}
+                  </Text>
+                  <Text style={[styles.activityDescription, { color: colors.text.secondary }]}>
+                    {activity.description}
+                  </Text>
+                  <Text style={[styles.activityTime, { color: colors.text.tertiary }]}>
+                    {activity.time}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        </View>
+      </ScrollView>
 
       {/* Modals */}
       <NotificationModal 
@@ -315,47 +511,47 @@ export default function DashboardScreen() {
         onClose={() => setShowReportModal(false)}
         stats={todayAttendance}
       />
-    </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: AppColors.background.primary,
   },
-  scrollContent: {
-    paddingBottom: Spacing.xl,
-  },
-
-  // Header Section
-  header: {
-    backgroundColor: AppColors.primary.main,
+  
+  // Gradient Header
+  gradientHeader: {
     paddingHorizontal: Spacing.lg,
     paddingTop: Spacing.md,
     paddingBottom: Spacing.xl,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    shadowColor: AppColors.primary.main,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
+  },
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
   },
   headerLeft: {
     flex: 1,
   },
   headerGreeting: {
     fontSize: FontSizes.base,
-    color: AppColors.primary.contrast,
     opacity: 0.9,
-    marginBottom: Spacing.xs,
+    marginBottom: 4,
   },
   headerName: {
     fontSize: FontSizes['2xl'],
     fontWeight: 'bold',
-    color: AppColors.primary.contrast,
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: FontSizes.sm,
+    opacity: 0.8,
   },
   notificationButton: {
     width: 48,
@@ -370,7 +566,6 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 6,
     right: 6,
-    backgroundColor: AppColors.status.error.main,
     borderRadius: BorderRadius.full,
     minWidth: 18,
     height: 18,
@@ -381,7 +576,65 @@ const styles = StyleSheet.create({
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: 'bold',
-    color: AppColors.text.inverse,
+    color: '#FFFFFF',
+  },
+
+  // Live Class Banner
+  liveClassBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    paddingHorizontal: Spacing.md,
+    paddingVertical: Spacing.sm,
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing.md,
+    gap: Spacing.sm,
+  },
+  liveDotContainer: {
+    position: 'relative',
+    width: 12,
+    height: 12,
+  },
+  liveDot: {
+    position: 'absolute',
+    width: 8,
+    height: 8,
+    borderRadius: BorderRadius.full,
+    backgroundColor: '#FF4444',
+    top: 2,
+    left: 2,
+  },
+  liveDotPulse: {
+    width: 12,
+    height: 12,
+    backgroundColor: '#FF4444',
+    opacity: 0.4,
+    top: 0,
+    left: 0,
+  },
+  liveClassText: {
+    fontSize: FontSizes.sm,
+    fontWeight: '700',
+  },
+
+  // Scroll View
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingBottom: Spacing.xl,
+  },
+
+  // Stats Section
+  statsSection: {
+    marginTop: -Spacing.xl * 2,
+    paddingHorizontal: Spacing.lg,
+    marginBottom: Spacing.md,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: Spacing.md,
   },
 
   // Section
@@ -392,479 +645,108 @@ const styles = StyleSheet.create({
   lastSection: {
     marginBottom: Spacing.lg,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: Spacing.md,
+  },
   sectionTitle: {
     fontSize: FontSizes.xl,
     fontWeight: '700',
-    color: AppColors.primary.main,
     marginBottom: Spacing.md,
   },
 
-  // Stats Section
-  statsSection: {
-    paddingHorizontal: Spacing.lg,
-    marginTop: Spacing.lg,
+  // Live Badge
+  liveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FF4444',
+    paddingHorizontal: Spacing.sm,
+    paddingVertical: 4,
+    borderRadius: BorderRadius.full,
+    gap: 4,
   },
-  statsGrid: {
+  liveBadgeDot: {
+    width: 6,
+    height: 6,
+    borderRadius: BorderRadius.full,
+    backgroundColor: '#FFFFFF',
+  },
+  liveBadgeText: {
+    fontSize: FontSizes.xs,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+
+  // Quick Actions
+  quickActionsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: Spacing.md,
   },
-  statCard: {
-    width: '47%',
-    backgroundColor: AppColors.ui.card,
+  quickActionCard: {
+    width: (width - Spacing.lg * 2 - Spacing.md) / 2,
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     alignItems: 'center',
-    shadowColor: AppColors.ui.shadow,
+    borderWidth: 1,
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 8,
-    elevation: 3,
+    elevation: 2,
   },
-  statIconContainer: {
-    width: 48,
-    height: 48,
+  quickActionIcon: {
+    width: 56,
+    height: 56,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: Spacing.sm,
   },
-  statNumber: {
-    fontSize: FontSizes['3xl'],
-    fontWeight: 'bold',
-    color: AppColors.text.primary,
-    marginBottom: Spacing.xs,
-  },
-  statLabel: {
+  quickActionText: {
     fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
-    textAlign: 'center',
-    fontWeight: '500',
-  },
-
-  // Schedule Card
-  scheduleCard: {
-    backgroundColor: AppColors.ui.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    shadowColor: AppColors.ui.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  scheduleHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  scheduleHeaderLeft: {
-    flex: 1,
-  },
-  scheduleSubject: {
-    fontSize: FontSizes.xl,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    marginBottom: Spacing.xs,
-  },
-  scheduleGrade: {
-    fontSize: FontSizes.base,
-    color: AppColors.text.secondary,
-    fontWeight: '500',
-  },
-  scheduleTimeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: AppColors.background.secondary,
-    paddingHorizontal: Spacing.sm,
-    paddingVertical: Spacing.xs,
-    borderRadius: BorderRadius.md,
-    gap: 4,
-  },
-  scheduleTime: {
-    fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
-    fontWeight: '600',
-  },
-  scheduleDivider: {
-    height: 1,
-    backgroundColor: AppColors.ui.divider,
-    marginVertical: Spacing.md,
-  },
-  scheduleDetails: {
-    gap: Spacing.sm,
-    marginBottom: Spacing.md,
-  },
-  scheduleDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  scheduleDetailText: {
-    fontSize: FontSizes.base,
-    color: AppColors.text.primary,
-    fontWeight: '500',
-  },
-  quickAttendanceButton: {
-    backgroundColor: AppColors.primary.main,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-    shadowColor: AppColors.primary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  quickAttendanceButtonText: {
-    fontSize: FontSizes.base,
-    fontWeight: '600',
-    color: AppColors.primary.contrast,
-  },
-
-  // Attendance Summary Card
-  attendanceCard: {
-    backgroundColor: AppColors.ui.card,
-    borderRadius: BorderRadius.lg,
-    padding: Spacing.lg,
-    shadowColor: AppColors.ui.shadow,
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  attendanceProgressContainer: {
-    marginBottom: Spacing.lg,
-  },
-  attendanceProgressBackground: {
-    height: 12,
-    backgroundColor: AppColors.background.secondary,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-    marginBottom: Spacing.sm,
-  },
-  attendanceProgressFill: {
-    height: '100%',
-    backgroundColor: AppColors.status.success.main,
-    borderRadius: BorderRadius.full,
-  },
-  attendanceProgressText: {
-    fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
     fontWeight: '600',
     textAlign: 'center',
   },
-  attendanceStatsRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.md,
-  },
-  attendanceStatItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  attendanceStatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: Spacing.xs,
-  },
-  attendanceStatDot: {
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.full,
-  },
-  attendanceStatLabel: {
-    fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
-    fontWeight: '500',
-  },
-  attendanceStatNumber: {
-    fontSize: FontSizes['2xl'],
-    fontWeight: 'bold',
-  },
-  attendanceStatDivider: {
-    width: 1,
-    backgroundColor: AppColors.ui.divider,
-    marginHorizontal: Spacing.sm,
-  },
-  viewDetailsButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: Spacing.sm,
-    gap: Spacing.xs,
-  },
-  viewDetailsButtonText: {
-    fontSize: FontSizes.base,
-    color: AppColors.primary.main,
-    fontWeight: '600',
-  },
 
-  // Modal Overlay
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: AppColors.ui.overlay,
-    justifyContent: 'flex-end',
+  // Recent Activity
+  activityList: {
+    gap: Spacing.sm,
   },
-
-  // Notification Modal
-  notificationModal: {
-    backgroundColor: AppColors.ui.card,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '80%',
-    paddingBottom: Spacing.xl,
-  },
-  notificationHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.ui.border,
-  },
-  notificationTitle: {
-    fontSize: FontSizes['2xl'],
-    fontWeight: '700',
-    color: AppColors.text.primary,
-  },
-  notificationList: {
-    maxHeight: 500,
-  },
-  notificationItem: {
+  activityItem: {
     flexDirection: 'row',
     padding: Spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.ui.divider,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
     gap: Spacing.md,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 1,
   },
-  notificationItemUnread: {
-    backgroundColor: AppColors.primary.main + '08',
-  },
-  notificationIcon: {
+  activityIcon: {
     width: 40,
     height: 40,
     borderRadius: BorderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  notificationContent: {
+  activityContent: {
     flex: 1,
   },
-  notificationTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: Spacing.xs,
-  },
-  notificationItemTitle: {
+  activityTitle: {
     fontSize: FontSizes.base,
     fontWeight: '600',
-    color: AppColors.text.primary,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: BorderRadius.full,
-    backgroundColor: AppColors.primary.main,
-  },
-  notificationMessage: {
-    fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
-    marginBottom: Spacing.xs,
-  },
-  notificationTime: {
-    fontSize: FontSizes.xs,
-    color: AppColors.text.tertiary,
-  },
-  markAllButton: {
-    margin: Spacing.lg,
-    marginTop: Spacing.md,
-    backgroundColor: AppColors.primary.main,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-  },
-  markAllButtonText: {
-    fontSize: FontSizes.base,
-    fontWeight: '600',
-    color: AppColors.primary.contrast,
-  },
-
-  // Detailed Report Modal
-  reportModal: {
-    backgroundColor: AppColors.ui.card,
-    borderTopLeftRadius: BorderRadius.xl,
-    borderTopRightRadius: BorderRadius.xl,
-    maxHeight: '90%',
-    paddingBottom: Spacing.lg,
-  },
-  reportHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.ui.border,
-  },
-  reportHeaderLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.sm,
-  },
-  reportTitle: {
-    fontSize: FontSizes['2xl'],
-    fontWeight: '700',
-    color: AppColors.text.primary,
-  },
-  reportContent: {
-    maxHeight: 600,
-  },
-  reportSection: {
-    padding: Spacing.lg,
-    borderBottomWidth: 1,
-    borderBottomColor: AppColors.ui.divider,
-  },
-  reportSectionTitle: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-    color: AppColors.text.primary,
-    marginBottom: Spacing.md,
-  },
-  reportSummaryCard: {
-    backgroundColor: AppColors.background.secondary,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    gap: Spacing.sm,
-  },
-  reportSummaryRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  reportLabel: {
-    fontSize: FontSizes.base,
-    color: AppColors.text.secondary,
-    fontWeight: '500',
-  },
-  reportValue: {
-    fontSize: FontSizes.base,
-    color: AppColors.text.primary,
-    fontWeight: '600',
-  },
-  reportStatCard: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    backgroundColor: AppColors.ui.card,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.lg,
-    marginBottom: Spacing.sm,
-    borderWidth: 1,
-    borderColor: AppColors.ui.border,
-  },
-  reportStatHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.md,
-    flex: 1,
-  },
-  reportStatIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: BorderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  reportStatInfo: {
-    flex: 1,
-  },
-  reportStatLabel: {
-    fontSize: FontSizes.base,
-    fontWeight: '600',
-    color: AppColors.text.primary,
     marginBottom: 2,
   },
-  reportStatDescription: {
+  activityDescription: {
     fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
+    marginBottom: 4,
   },
-  reportStatNumber: {
-    fontSize: FontSizes['3xl'],
-    fontWeight: 'bold',
-  },
-  classBreakdownCard: {
-    backgroundColor: AppColors.background.secondary,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
-  },
-  classBreakdownHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: Spacing.xs,
-  },
-  classBreakdownName: {
-    fontSize: FontSizes.base,
-    fontWeight: '600',
-    color: AppColors.text.primary,
-  },
-  classBreakdownPercentage: {
-    fontSize: FontSizes.lg,
-    fontWeight: '700',
-  },
-  classBreakdownStats: {
-    marginBottom: Spacing.xs,
-  },
-  classBreakdownText: {
-    fontSize: FontSizes.sm,
-    color: AppColors.text.secondary,
-  },
-  classProgressBar: {
-    height: 6,
-    backgroundColor: AppColors.ui.divider,
-    borderRadius: BorderRadius.full,
-    overflow: 'hidden',
-  },
-  classProgressFill: {
-    height: '100%',
-    backgroundColor: AppColors.status.success.main,
-    borderRadius: BorderRadius.full,
-  },
-  insightCard: {
-    backgroundColor: AppColors.status.info.background,
-    padding: Spacing.md,
-    borderRadius: BorderRadius.md,
-    marginBottom: Spacing.sm,
-    borderLeftWidth: 4,
-    borderLeftColor: AppColors.status.info.main,
-  },
-  insightText: {
-    fontSize: FontSizes.base,
-    color: AppColors.status.info.text,
-    fontWeight: '500',
-  },
-  reportCloseButton: {
-    margin: Spacing.lg,
-    marginTop: Spacing.md,
-    backgroundColor: AppColors.primary.main,
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    shadowColor: AppColors.primary.main,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  reportCloseButtonText: {
-    fontSize: FontSizes.base,
-    fontWeight: '600',
-    color: AppColors.primary.contrast,
+  activityTime: {
+    fontSize: FontSizes.xs,
   },
 });
