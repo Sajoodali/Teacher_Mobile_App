@@ -1,6 +1,6 @@
 /**
  * Professional Assignment Form Modal
- * 
+ *
  * Features:
  * - Native DateTimePicker for date/time selection
  * - Image & Document picker from device
@@ -9,26 +9,26 @@
  * - Smooth animations
  */
 
-import { BorderRadius, FontSizes, Spacing } from '@/constants/theme';
-import { useTheme } from '@/context/ThemeContext';
-import { ClassItem } from '@/types/classes';
-import DateTimePicker from '@react-native-community/datetimepicker';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
-import React, { useEffect, useRef, useState } from 'react';
+import { BorderRadius, FontSizes, Spacing } from "@/constants/theme";
+import { useTheme } from "@/context/ThemeContext";
+import { ClassItem } from "@/types/classes";
+import DateTimePicker from "@react-native-community/datetimepicker";
+import * as DocumentPicker from "expo-document-picker";
+import * as ImagePicker from "expo-image-picker";
+import React, { useEffect, useRef, useState } from "react";
 import {
-    Alert,
-    Animated,
-    Modal,
-    Platform,
-    ScrollView,
-    StyleSheet,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View
-} from 'react-native';
-import { IconSymbol } from '../ui/icon-symbol';
+  Animated,
+  Modal,
+  Platform,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { CustomAlert } from "../ui/CustomAlert";
+import { IconSymbol } from "../ui/icon-symbol";
 
 interface AssignmentFormModalProps {
   visible: boolean;
@@ -43,6 +43,19 @@ interface Attachment {
   uri?: string;
 }
 
+interface CustomAlertConfig {
+  visible: boolean;
+  title: string;
+  message?: string;
+  icon?: string;
+  iconColor?: string;
+  buttons?: Array<{
+    text: string;
+    onPress?: () => void;
+    style?: "default" | "cancel" | "destructive";
+  }>;
+}
+
 export function AssignmentFormModal({
   visible,
   onClose,
@@ -54,22 +67,32 @@ export function AssignmentFormModal({
   const toastAnim = useRef(new Animated.Value(0)).current;
 
   // Form state
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [submissionInstructions, setSubmissionInstructions] = useState('');
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [submissionInstructions, setSubmissionInstructions] = useState("");
   const [dueDate, setDueDate] = useState(new Date());
   const [dueTime, setDueTime] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [showTimePicker, setShowTimePicker] = useState(false);
-  const [totalMarks, setTotalMarks] = useState('');
-  const [assignmentType, setAssignmentType] = useState<'homework' | 'project' | 'quiz' | 'exam'>('homework');
-  const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [totalMarks, setTotalMarks] = useState("");
+  const [assignmentType, setAssignmentType] = useState<
+    "homework" | "project" | "quiz" | "exam"
+  >("homework");
+  const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [allowLateSubmission, setAllowLateSubmission] = useState(false);
   const [notifyStudents, setNotifyStudents] = useState(true);
   const [autoGrade, setAutoGrade] = useState(false);
-  const [toastMessage, setToastMessage] = useState('');
-  const [toastType, setToastType] = useState<'success' | 'error' | 'info'>('success');
+  const [toastMessage, setToastMessage] = useState("");
+  const [toastType, setToastType] = useState<"success" | "error" | "info">(
+    "success"
+  );
+  const [alertConfig, setAlertConfig] = useState<CustomAlertConfig>({
+    visible: false,
+    title: "",
+    message: "",
+    buttons: [],
+  });
 
   useEffect(() => {
     if (visible) {
@@ -102,10 +125,13 @@ export function AssignmentFormModal({
     }
   }, [visible]);
 
-  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+  const showToast = (
+    message: string,
+    type: "success" | "error" | "info" = "success"
+  ) => {
     setToastMessage(message);
     setToastType(type);
-    
+
     Animated.sequence([
       Animated.timing(toastAnim, {
         toValue: 1,
@@ -121,15 +147,26 @@ export function AssignmentFormModal({
     ]).start();
   };
 
+  const showCustomAlert = (config: Omit<CustomAlertConfig, "visible">) => {
+    setAlertConfig({
+      ...config,
+      visible: true,
+    });
+  };
+
+  const closeCustomAlert = () => {
+    setAlertConfig((prev) => ({ ...prev, visible: false }));
+  };
+
   const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setSubmissionInstructions('');
+    setTitle("");
+    setDescription("");
+    setSubmissionInstructions("");
     setDueDate(new Date());
     setDueTime(new Date());
-    setTotalMarks('');
-    setAssignmentType('homework');
-    setPriority('medium');
+    setTotalMarks("");
+    setAssignmentType("homework");
+    setPriority("medium");
     setAttachments([]);
     setAllowLateSubmission(false);
     setNotifyStudents(true);
@@ -138,10 +175,11 @@ export function AssignmentFormModal({
 
   const handlePickImage = async () => {
     try {
-      const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
-      
+      const permissionResult =
+        await ImagePicker.requestMediaLibraryPermissionsAsync();
+
       if (!permissionResult.granted) {
-        showToast('Permission to access gallery is required!', 'error');
+        showToast("Permission to access gallery is required!", "error");
         return;
       }
 
@@ -153,72 +191,86 @@ export function AssignmentFormModal({
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        const fileName = asset.uri.split('/').pop() || 'image.jpg';
-        const fileSize = asset.fileSize ? `${(asset.fileSize / 1024).toFixed(0)} KB` : 'Unknown';
-        
+        const fileName = asset.uri.split("/").pop() || "image.jpg";
+        const fileSize = asset.fileSize
+          ? `${(asset.fileSize / 1024).toFixed(0)} KB`
+          : "Unknown";
+
         const newAttachment: Attachment = {
           name: fileName,
-          type: 'image',
+          type: "image",
           size: fileSize,
           uri: asset.uri,
         };
-        
+
         setAttachments([...attachments, newAttachment]);
-        showToast('Image added successfully!', 'success');
+        showToast("Image added successfully!", "success");
       }
     } catch (error) {
-      showToast('Failed to pick image', 'error');
-      console.error('Image picker error:', error);
+      showToast("Failed to pick image", "error");
+      console.error("Image picker error:", error);
     }
   };
 
   const handlePickDocument = async () => {
     try {
       const result = await DocumentPicker.getDocumentAsync({
-        type: '*/*',
+        type: "*/*",
         copyToCacheDirectory: true,
       });
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        const fileSize = asset.size ? `${(asset.size / 1024).toFixed(0)} KB` : 'Unknown';
-        
+        const fileSize = asset.size
+          ? `${(asset.size / 1024).toFixed(0)} KB`
+          : "Unknown";
+
         const newAttachment: Attachment = {
           name: asset.name,
-          type: asset.mimeType?.includes('pdf') ? 'pdf' : 'document',
+          type: asset.mimeType?.includes("pdf") ? "pdf" : "document",
           size: fileSize,
           uri: asset.uri,
         };
-        
+
         setAttachments([...attachments, newAttachment]);
-        showToast('Document added successfully!', 'success');
+        showToast("Document added successfully!", "success");
       }
     } catch (error) {
-      showToast('Failed to pick document', 'error');
-      console.error('Document picker error:', error);
+      showToast("Failed to pick document", "error");
+      console.error("Document picker error:", error);
     }
   };
 
   const handleAddAttachment = () => {
-    Alert.alert(
-      '📎 Add Attachment',
-      'Choose attachment type',
-      [
+    showCustomAlert({
+      title: "Add Attachment",
+      message: "Choose how you want to add a file",
+      icon: "paperclip",
+      iconColor: colors.primary.main,
+      buttons: [
         {
-          text: '🖼️ Image from Gallery',
-          onPress: handlePickImage,
+          text: "🖼️ Image from Gallery",
+          onPress: () => {
+            closeCustomAlert();
+            handlePickImage();
+          },
         },
         {
-          text: '📄 Document/PDF',
-          onPress: handlePickDocument,
+          text: "📄 Document/PDF",
+          onPress: () => {
+            closeCustomAlert();
+            handlePickDocument();
+          },
         },
         {
-          text: '📸 Take Photo',
+          text: "📸 Take Photo",
           onPress: async () => {
-            const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
-            
+            closeCustomAlert();
+            const permissionResult =
+              await ImagePicker.requestCameraPermissionsAsync();
+
             if (!permissionResult.granted) {
-              showToast('Camera permission is required!', 'error');
+              showToast("Camera permission is required!", "error");
               return;
             }
 
@@ -229,56 +281,58 @@ export function AssignmentFormModal({
             if (!result.canceled && result.assets[0]) {
               const asset = result.assets[0];
               const fileName = `photo_${Date.now()}.jpg`;
-              const fileSize = asset.fileSize ? `${(asset.fileSize / 1024).toFixed(0)} KB` : 'Unknown';
-              
+              const fileSize = asset.fileSize
+                ? `${(asset.fileSize / 1024).toFixed(0)} KB`
+                : "Unknown";
+
               const newAttachment: Attachment = {
                 name: fileName,
-                type: 'image',
+                type: "image",
                 size: fileSize,
                 uri: asset.uri,
               };
-              
+
               setAttachments([...attachments, newAttachment]);
-              showToast('Photo added successfully!', 'success');
+              showToast("Photo added successfully!", "success");
             }
           },
         },
-        { text: 'Cancel', style: 'cancel' },
-      ]
-    );
+        { text: "Cancel", style: "cancel", onPress: closeCustomAlert },
+      ],
+    });
   };
 
   const handleRemoveAttachment = (index: number) => {
     setAttachments(attachments.filter((_, i) => i !== index));
-    showToast('Attachment removed', 'info');
+    showToast("Attachment removed", "info");
   };
 
   const handleDateChange = (event: any, selectedDate?: Date) => {
-    setShowDatePicker(Platform.OS === 'ios');
+    setShowDatePicker(Platform.OS === "ios");
     if (selectedDate) {
       setDueDate(selectedDate);
     }
   };
 
   const handleTimeChange = (event: any, selectedTime?: Date) => {
-    setShowTimePicker(Platform.OS === 'ios');
+    setShowTimePicker(Platform.OS === "ios");
     if (selectedTime) {
       setDueTime(selectedTime);
     }
   };
 
   const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-GB', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+    return date.toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
     });
   };
 
   const formatTime = (date: Date) => {
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
       hour12: true,
     });
   };
@@ -286,69 +340,82 @@ export function AssignmentFormModal({
   const handleSubmit = () => {
     // Validation
     if (!title.trim()) {
-      showToast('Please enter assignment title', 'error');
+      showToast("Please enter assignment title", "error");
       return;
     }
     if (!description.trim()) {
-      showToast('Please enter assignment description', 'error');
+      showToast("Please enter assignment description", "error");
       return;
     }
     if (!totalMarks.trim()) {
-      showToast('Please enter total marks', 'error');
+      showToast("Please enter total marks", "error");
       return;
     }
 
     // Success
     const successDetails = [
-      `📚 Type: ${assignmentType.charAt(0).toUpperCase() + assignmentType.slice(1)}`,
+      `📚 Type: ${
+        assignmentType.charAt(0).toUpperCase() + assignmentType.slice(1)
+      }`,
       `📅 Due: ${formatDate(dueDate)} at ${formatTime(dueTime)}`,
       `📊 Total Marks: ${totalMarks}`,
-      attachments.length > 0 ? `📎 ${attachments.length} attachment(s)` : '',
-      notifyStudents ? `🔔 ${selectedClass?.totalStudents} students will be notified` : '',
-      allowLateSubmission ? '⏰ Late submission allowed' : '',
-      autoGrade ? '✨ Auto-grading enabled' : '',
-    ].filter(Boolean).join('\n');
+      attachments.length > 0 ? `📎 ${attachments.length} attachment(s)` : "",
+      notifyStudents
+        ? `🔔 ${selectedClass?.totalStudents} students will be notified`
+        : "",
+      allowLateSubmission ? "⏰ Late submission allowed" : "",
+      autoGrade ? "✨ Auto-grading enabled" : "",
+    ]
+      .filter(Boolean)
+      .join("\n");
 
-    Alert.alert(
-      '✅ Assignment Created!',
-      `"${title}" has been created for ${selectedClass?.className}.\n\n${successDetails}`,
-      [
+    showCustomAlert({
+      title: "Assignment Created!",
+      message: `"${title}" has been created for ${selectedClass?.className}.\n\n${successDetails}`,
+      icon: "checkmark.circle.fill",
+      iconColor: colors.status.success.main,
+      buttons: [
         {
-          text: 'Create Another',
+          text: "Create Another",
           onPress: () => {
+            closeCustomAlert();
             resetForm();
-            showToast('Ready for new assignment', 'info');
+            showToast("Ready for new assignment", "info");
           },
         },
         {
-          text: 'Done',
-          style: 'default',
+          text: "Done",
+          style: "default",
           onPress: () => {
+            closeCustomAlert();
             resetForm();
             onClose();
           },
         },
-      ]
-    );
+      ],
+    });
   };
 
   const handleClose = () => {
     if (title || description || totalMarks || attachments.length > 0) {
-      Alert.alert(
-        'Discard Changes?',
-        'You have unsaved changes. Are you sure you want to close?',
-        [
-          { text: 'Cancel', style: 'cancel' },
+      showCustomAlert({
+        title: "Discard Changes?",
+        message: "You have unsaved changes. Are you sure you want to close?",
+        icon: "exclamationmark.triangle.fill",
+        iconColor: colors.status.warning.main,
+        buttons: [
+          { text: "Cancel", style: "cancel", onPress: closeCustomAlert },
           {
-            text: 'Discard',
-            style: 'destructive',
+            text: "Discard",
+            style: "destructive",
             onPress: () => {
+              closeCustomAlert();
               resetForm();
               onClose();
             },
           },
-        ]
-      );
+        ],
+      });
     } else {
       onClose();
     }
@@ -357,16 +424,36 @@ export function AssignmentFormModal({
   if (!selectedClass) return null;
 
   const assignmentTypes = [
-    { id: 'homework', label: 'Homework', icon: 'book.fill', color: colors.status.info.main },
-    { id: 'project', label: 'Project', icon: 'folder.fill', color: colors.status.success.main },
-    { id: 'quiz', label: 'Quiz', icon: 'doc.text.fill', color: colors.status.warning.main },
-    { id: 'exam', label: 'Exam', icon: 'graduationcap.fill', color: colors.status.error.main },
+    {
+      id: "homework",
+      label: "Homework",
+      icon: "book.fill",
+      color: colors.status.info.main,
+    },
+    {
+      id: "project",
+      label: "Project",
+      icon: "folder.fill",
+      color: colors.status.success.main,
+    },
+    {
+      id: "quiz",
+      label: "Quiz",
+      icon: "doc.text.fill",
+      color: colors.status.warning.main,
+    },
+    {
+      id: "exam",
+      label: "Exam",
+      icon: "graduationcap.fill",
+      color: colors.status.error.main,
+    },
   ];
 
   const priorities = [
-    { id: 'low', label: 'Low', color: colors.status.success.main },
-    { id: 'medium', label: 'Medium', color: colors.status.warning.main },
-    { id: 'high', label: 'High', color: colors.status.error.main },
+    { id: "low", label: "Low", color: colors.status.success.main },
+    { id: "medium", label: "Medium", color: colors.status.warning.main },
+    { id: "high", label: "High", color: colors.status.error.main },
   ];
 
   return (
@@ -376,7 +463,9 @@ export function AssignmentFormModal({
       animationType="none"
       onRequestClose={handleClose}
     >
-      <View style={[styles.modalOverlay, { backgroundColor: colors.ui.overlay }]}>
+      <View
+        style={[styles.modalOverlay, { backgroundColor: colors.ui.overlay }]}
+      >
         <Animated.View
           style={[
             styles.formModal,
@@ -388,16 +477,37 @@ export function AssignmentFormModal({
           ]}
         >
           {/* Header */}
-          <View style={[styles.header, { backgroundColor: colors.primary.main }]}>
+          <View
+            style={[styles.header, { backgroundColor: colors.primary.main }]}
+          >
             <View style={styles.headerLeft}>
-              <View style={[styles.headerIconContainer, { backgroundColor: colors.primary.contrast + '20' }]}>
-                <IconSymbol name="doc.text.fill" size={28} color={colors.primary.contrast} />
+              <View
+                style={[
+                  styles.headerIconContainer,
+                  { backgroundColor: colors.primary.contrast + "20" },
+                ]}
+              >
+                <IconSymbol
+                  name="doc.text.fill"
+                  size={28}
+                  color={colors.primary.contrast}
+                />
               </View>
               <View style={styles.headerText}>
-                <Text style={[styles.headerTitle, { color: colors.primary.contrast }]}>
+                <Text
+                  style={[
+                    styles.headerTitle,
+                    { color: colors.primary.contrast },
+                  ]}
+                >
                   Create Assignment
                 </Text>
-                <Text style={[styles.headerSubtitle, { color: colors.primary.contrast + 'CC' }]}>
+                <Text
+                  style={[
+                    styles.headerSubtitle,
+                    { color: colors.primary.contrast + "CC" },
+                  ]}
+                >
                   {selectedClass.className} • {selectedClass.subject}
                 </Text>
               </View>
@@ -407,20 +517,30 @@ export function AssignmentFormModal({
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               style={styles.closeButton}
             >
-              <IconSymbol name="xmark" size={24} color={colors.primary.contrast} />
+              <IconSymbol
+                name="xmark"
+                size={24}
+                color={colors.primary.contrast}
+              />
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.formContent} showsVerticalScrollIndicator={false}>
+          <ScrollView
+            style={styles.formContent}
+            showsVerticalScrollIndicator={false}
+          >
             {/* Assignment Title */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.text.primary }]}
+              >
                 📝 Assignment Details
               </Text>
-              
+
               <View style={styles.inputGroup}>
                 <Text style={[styles.label, { color: colors.text.secondary }]}>
-                  Title <Text style={{ color: colors.status.error.main }}>*</Text>
+                  Title{" "}
+                  <Text style={{ color: colors.status.error.main }}>*</Text>
                 </Text>
                 <TextInput
                   style={[
@@ -440,10 +560,23 @@ export function AssignmentFormModal({
 
               <View style={styles.inputGroup}>
                 <View style={styles.labelRow}>
-                  <Text style={[styles.label, { color: colors.text.secondary }]}>
-                    Description <Text style={{ color: colors.status.error.main }}>*</Text>
+                  <Text
+                    style={[styles.label, { color: colors.text.secondary }]}
+                  >
+                    Description{" "}
+                    <Text style={{ color: colors.status.error.main }}>*</Text>
                   </Text>
-                  <Text style={[styles.charCounter, { color: description.length > 500 ? colors.status.error.main : colors.text.tertiary }]}>
+                  <Text
+                    style={[
+                      styles.charCounter,
+                      {
+                        color:
+                          description.length > 500
+                            ? colors.status.error.main
+                            : colors.text.tertiary,
+                      },
+                    ]}
+                  >
                     {description.length}/500
                   </Text>
                 </View>
@@ -453,13 +586,18 @@ export function AssignmentFormModal({
                     {
                       backgroundColor: colors.background.secondary,
                       color: colors.text.primary,
-                      borderColor: description.length > 500 ? colors.status.error.main : colors.ui.border,
+                      borderColor:
+                        description.length > 500
+                          ? colors.status.error.main
+                          : colors.ui.border,
                     },
                   ]}
                   placeholder="Describe the assignment, instructions, and requirements..."
                   placeholderTextColor={colors.text.tertiary}
                   value={description}
-                  onChangeText={(text) => text.length <= 500 && setDescription(text)}
+                  onChangeText={(text) =>
+                    text.length <= 500 && setDescription(text)
+                  }
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
@@ -492,7 +630,9 @@ export function AssignmentFormModal({
 
             {/* Assignment Type */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.text.primary }]}
+              >
                 📚 Assignment Type
               </Text>
               <View style={styles.typeGrid}>
@@ -504,10 +644,12 @@ export function AssignmentFormModal({
                       {
                         backgroundColor:
                           assignmentType === type.id
-                            ? type.color + '20'
+                            ? type.color + "20"
                             : colors.background.secondary,
                         borderColor:
-                          assignmentType === type.id ? type.color : colors.ui.border,
+                          assignmentType === type.id
+                            ? type.color
+                            : colors.ui.border,
                       },
                     ]}
                     onPress={() => setAssignmentType(type.id as any)}
@@ -516,14 +658,20 @@ export function AssignmentFormModal({
                     <IconSymbol
                       name={type.icon as any}
                       size={24}
-                      color={assignmentType === type.id ? type.color : colors.text.secondary}
+                      color={
+                        assignmentType === type.id
+                          ? type.color
+                          : colors.text.secondary
+                      }
                     />
                     <Text
                       style={[
                         styles.typeLabel,
                         {
                           color:
-                            assignmentType === type.id ? type.color : colors.text.primary,
+                            assignmentType === type.id
+                              ? type.color
+                              : colors.text.primary,
                         },
                       ]}
                     >
@@ -536,13 +684,18 @@ export function AssignmentFormModal({
 
             {/* Due Date & Time */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.text.primary }]}
+              >
                 📅 Due Date & Time
               </Text>
               <View style={styles.row}>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={[styles.label, { color: colors.text.secondary }]}>
-                    Date <Text style={{ color: colors.status.error.main }}>*</Text>
+                  <Text
+                    style={[styles.label, { color: colors.text.secondary }]}
+                  >
+                    Date{" "}
+                    <Text style={{ color: colors.status.error.main }}>*</Text>
                   </Text>
                   <TouchableOpacity
                     style={[
@@ -554,14 +707,27 @@ export function AssignmentFormModal({
                     ]}
                     onPress={() => setShowDatePicker(true)}
                   >
-                    <IconSymbol name="calendar" size={20} color={colors.primary.main} />
-                    <Text style={[styles.dateTimeText, { color: colors.text.primary }]}>
+                    <IconSymbol
+                      name="calendar"
+                      size={20}
+                      color={colors.primary.main}
+                    />
+                    <Text
+                      style={[
+                        styles.dateTimeText,
+                        { color: colors.text.primary },
+                      ]}
+                    >
                       {formatDate(dueDate)}
                     </Text>
                   </TouchableOpacity>
                 </View>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={[styles.label, { color: colors.text.secondary }]}>Time</Text>
+                  <Text
+                    style={[styles.label, { color: colors.text.secondary }]}
+                  >
+                    Time
+                  </Text>
                   <TouchableOpacity
                     style={[
                       styles.dateTimeButton,
@@ -572,8 +738,17 @@ export function AssignmentFormModal({
                     ]}
                     onPress={() => setShowTimePicker(true)}
                   >
-                    <IconSymbol name="clock.fill" size={20} color={colors.primary.main} />
-                    <Text style={[styles.dateTimeText, { color: colors.text.primary }]}>
+                    <IconSymbol
+                      name="clock.fill"
+                      size={20}
+                      color={colors.primary.main}
+                    />
+                    <Text
+                      style={[
+                        styles.dateTimeText,
+                        { color: colors.text.primary },
+                      ]}
+                    >
                       {formatTime(dueTime)}
                     </Text>
                   </TouchableOpacity>
@@ -583,13 +758,18 @@ export function AssignmentFormModal({
 
             {/* Marks & Priority */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.text.primary }]}
+              >
                 🎯 Grading & Priority
               </Text>
               <View style={styles.row}>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={[styles.label, { color: colors.text.secondary }]}>
-                    Total Marks <Text style={{ color: colors.status.error.main }}>*</Text>
+                  <Text
+                    style={[styles.label, { color: colors.text.secondary }]}
+                  >
+                    Total Marks{" "}
+                    <Text style={{ color: colors.status.error.main }}>*</Text>
                   </Text>
                   <TextInput
                     style={[
@@ -608,7 +788,11 @@ export function AssignmentFormModal({
                   />
                 </View>
                 <View style={[styles.inputGroup, { flex: 1 }]}>
-                  <Text style={[styles.label, { color: colors.text.secondary }]}>Priority</Text>
+                  <Text
+                    style={[styles.label, { color: colors.text.secondary }]}
+                  >
+                    Priority
+                  </Text>
                   <View style={styles.priorityButtons}>
                     {priorities.map((p) => (
                       <TouchableOpacity
@@ -617,8 +801,11 @@ export function AssignmentFormModal({
                           styles.priorityButton,
                           {
                             backgroundColor:
-                              priority === p.id ? p.color + '20' : colors.background.secondary,
-                            borderColor: priority === p.id ? p.color : colors.ui.border,
+                              priority === p.id
+                                ? p.color + "20"
+                                : colors.background.secondary,
+                            borderColor:
+                              priority === p.id ? p.color : colors.ui.border,
                           },
                         ]}
                         onPress={() => setPriority(p.id as any)}
@@ -626,7 +813,12 @@ export function AssignmentFormModal({
                         <Text
                           style={[
                             styles.priorityText,
-                            { color: priority === p.id ? p.color : colors.text.secondary },
+                            {
+                              color:
+                                priority === p.id
+                                  ? p.color
+                                  : colors.text.secondary,
+                            },
                           ]}
                         >
                           {p.label}
@@ -641,15 +833,29 @@ export function AssignmentFormModal({
             {/* Attachments */}
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+                <Text
+                  style={[styles.sectionTitle, { color: colors.text.primary }]}
+                >
                   📎 Attachments
                 </Text>
                 <TouchableOpacity
-                  style={[styles.addButton, { backgroundColor: colors.primary.main }]}
+                  style={[
+                    styles.addButton,
+                    { backgroundColor: colors.primary.main },
+                  ]}
                   onPress={handleAddAttachment}
                 >
-                  <IconSymbol name="plus" size={16} color={colors.primary.contrast} />
-                  <Text style={[styles.addButtonText, { color: colors.primary.contrast }]}>
+                  <IconSymbol
+                    name="plus"
+                    size={16}
+                    color={colors.primary.contrast}
+                  />
+                  <Text
+                    style={[
+                      styles.addButtonText,
+                      { color: colors.primary.contrast },
+                    ]}
+                  >
                     Add File
                   </Text>
                 </TouchableOpacity>
@@ -662,59 +868,104 @@ export function AssignmentFormModal({
                       key={index}
                       style={[
                         styles.attachmentItem,
-                        { backgroundColor: colors.background.secondary, borderColor: colors.ui.border },
+                        {
+                          backgroundColor: colors.background.secondary,
+                          borderColor: colors.ui.border,
+                        },
                       ]}
                     >
-                      <View style={[
-                        styles.attachmentIconContainer,
-                        { 
-                          backgroundColor: 
-                            attachment.type === 'pdf' ? colors.status.error.main + '20' :
-                            attachment.type === 'image' ? colors.status.success.main + '20' :
-                            attachment.type === 'video' ? colors.status.warning.main + '20' :
-                            colors.primary.main + '20'
-                        }
-                      ]}>
+                      <View
+                        style={[
+                          styles.attachmentIconContainer,
+                          {
+                            backgroundColor:
+                              attachment.type === "pdf"
+                                ? colors.status.error.main + "20"
+                                : attachment.type === "image"
+                                ? colors.status.success.main + "20"
+                                : attachment.type === "video"
+                                ? colors.status.warning.main + "20"
+                                : colors.primary.main + "20",
+                          },
+                        ]}
+                      >
                         <IconSymbol
                           name={
-                            attachment.type === 'pdf' ? 'doc.fill' :
-                            attachment.type === 'image' ? 'photo.fill' :
-                            attachment.type === 'video' ? 'play.rectangle.fill' :
-                            'doc.fill'
+                            attachment.type === "pdf"
+                              ? "doc.fill"
+                              : attachment.type === "image"
+                              ? "photo.fill"
+                              : attachment.type === "video"
+                              ? "play.rectangle.fill"
+                              : "doc.fill"
                           }
                           size={24}
                           color={
-                            attachment.type === 'pdf' ? colors.status.error.main :
-                            attachment.type === 'image' ? colors.status.success.main :
-                            attachment.type === 'video' ? colors.status.warning.main :
-                            colors.primary.main
+                            attachment.type === "pdf"
+                              ? colors.status.error.main
+                              : attachment.type === "image"
+                              ? colors.status.success.main
+                              : attachment.type === "video"
+                              ? colors.status.warning.main
+                              : colors.primary.main
                           }
                         />
                       </View>
                       <View style={styles.attachmentInfo}>
-                        <Text style={[styles.attachmentName, { color: colors.text.primary }]} numberOfLines={1}>
+                        <Text
+                          style={[
+                            styles.attachmentName,
+                            { color: colors.text.primary },
+                          ]}
+                          numberOfLines={1}
+                        >
                           {attachment.name}
                         </Text>
-                        <Text style={[styles.attachmentSize, { color: colors.text.tertiary }]}>
+                        <Text
+                          style={[
+                            styles.attachmentSize,
+                            { color: colors.text.tertiary },
+                          ]}
+                        >
                           {attachment.size}
                         </Text>
                       </View>
-                      <TouchableOpacity 
+                      <TouchableOpacity
                         onPress={() => handleRemoveAttachment(index)}
                         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                       >
-                        <IconSymbol name="xmark.circle.fill" size={24} color={colors.status.error.main} />
+                        <IconSymbol
+                          name="xmark.circle.fill"
+                          size={24}
+                          color={colors.status.error.main}
+                        />
                       </TouchableOpacity>
                     </View>
                   ))}
                 </View>
               ) : (
-                <View style={[styles.emptyAttachments, { backgroundColor: colors.background.secondary }]}>
-                  <IconSymbol name="paperclip" size={32} color={colors.text.tertiary} />
-                  <Text style={[styles.emptyText, { color: colors.text.tertiary }]}>
+                <View
+                  style={[
+                    styles.emptyAttachments,
+                    { backgroundColor: colors.background.secondary },
+                  ]}
+                >
+                  <IconSymbol
+                    name="paperclip"
+                    size={32}
+                    color={colors.text.tertiary}
+                  />
+                  <Text
+                    style={[styles.emptyText, { color: colors.text.tertiary }]}
+                  >
                     No attachments added
                   </Text>
-                  <Text style={[styles.emptySubtext, { color: colors.text.tertiary }]}>
+                  <Text
+                    style={[
+                      styles.emptySubtext,
+                      { color: colors.text.tertiary },
+                    ]}
+                  >
                     Tap "Add File" to attach images or documents
                   </Text>
                 </View>
@@ -723,12 +974,17 @@ export function AssignmentFormModal({
 
             {/* Options */}
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
+              <Text
+                style={[styles.sectionTitle, { color: colors.text.primary }]}
+              >
                 ⚙️ Options
               </Text>
-              
+
               <TouchableOpacity
-                style={[styles.optionRow, { backgroundColor: colors.background.secondary }]}
+                style={[
+                  styles.optionRow,
+                  { backgroundColor: colors.background.secondary },
+                ]}
                 onPress={() => setAllowLateSubmission(!allowLateSubmission)}
                 activeOpacity={0.7}
               >
@@ -736,13 +992,27 @@ export function AssignmentFormModal({
                   <IconSymbol
                     name="clock.fill"
                     size={20}
-                    color={allowLateSubmission ? colors.primary.main : colors.text.secondary}
+                    color={
+                      allowLateSubmission
+                        ? colors.primary.main
+                        : colors.text.secondary
+                    }
                   />
                   <View style={styles.optionText}>
-                    <Text style={[styles.optionTitle, { color: colors.text.primary }]}>
+                    <Text
+                      style={[
+                        styles.optionTitle,
+                        { color: colors.text.primary },
+                      ]}
+                    >
                       Allow Late Submission
                     </Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.text.tertiary }]}>
+                    <Text
+                      style={[
+                        styles.optionSubtitle,
+                        { color: colors.text.tertiary },
+                      ]}
+                    >
                       Students can submit after due date
                     </Text>
                   </View>
@@ -762,7 +1032,9 @@ export function AssignmentFormModal({
                       styles.toggleThumb,
                       {
                         backgroundColor: colors.primary.contrast,
-                        transform: [{ translateX: allowLateSubmission ? 20 : 2 }],
+                        transform: [
+                          { translateX: allowLateSubmission ? 20 : 2 },
+                        ],
                       },
                     ]}
                   />
@@ -770,7 +1042,10 @@ export function AssignmentFormModal({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.optionRow, { backgroundColor: colors.background.secondary }]}
+                style={[
+                  styles.optionRow,
+                  { backgroundColor: colors.background.secondary },
+                ]}
                 onPress={() => setNotifyStudents(!notifyStudents)}
                 activeOpacity={0.7}
               >
@@ -778,14 +1053,29 @@ export function AssignmentFormModal({
                   <IconSymbol
                     name="bell.fill"
                     size={20}
-                    color={notifyStudents ? colors.primary.main : colors.text.secondary}
+                    color={
+                      notifyStudents
+                        ? colors.primary.main
+                        : colors.text.secondary
+                    }
                   />
                   <View style={styles.optionText}>
-                    <Text style={[styles.optionTitle, { color: colors.text.primary }]}>
+                    <Text
+                      style={[
+                        styles.optionTitle,
+                        { color: colors.text.primary },
+                      ]}
+                    >
                       Notify Students
                     </Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.text.tertiary }]}>
-                      Send notification to all {selectedClass.totalStudents} students
+                    <Text
+                      style={[
+                        styles.optionSubtitle,
+                        { color: colors.text.tertiary },
+                      ]}
+                    >
+                      Send notification to all {selectedClass.totalStudents}{" "}
+                      students
                     </Text>
                   </View>
                 </View>
@@ -793,7 +1083,9 @@ export function AssignmentFormModal({
                   style={[
                     styles.toggle,
                     {
-                      backgroundColor: notifyStudents ? colors.primary.main : colors.ui.border,
+                      backgroundColor: notifyStudents
+                        ? colors.primary.main
+                        : colors.ui.border,
                     },
                   ]}
                 >
@@ -810,7 +1102,10 @@ export function AssignmentFormModal({
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.optionRow, { backgroundColor: colors.background.secondary }]}
+                style={[
+                  styles.optionRow,
+                  { backgroundColor: colors.background.secondary },
+                ]}
                 onPress={() => setAutoGrade(!autoGrade)}
                 activeOpacity={0.7}
               >
@@ -818,13 +1113,25 @@ export function AssignmentFormModal({
                   <IconSymbol
                     name="wand.and.stars"
                     size={20}
-                    color={autoGrade ? colors.primary.main : colors.text.secondary}
+                    color={
+                      autoGrade ? colors.primary.main : colors.text.secondary
+                    }
                   />
                   <View style={styles.optionText}>
-                    <Text style={[styles.optionTitle, { color: colors.text.primary }]}>
+                    <Text
+                      style={[
+                        styles.optionTitle,
+                        { color: colors.text.primary },
+                      ]}
+                    >
                       Auto-Grade (Beta)
                     </Text>
-                    <Text style={[styles.optionSubtitle, { color: colors.text.tertiary }]}>
+                    <Text
+                      style={[
+                        styles.optionSubtitle,
+                        { color: colors.text.tertiary },
+                      ]}
+                    >
                       Automatically grade objective questions
                     </Text>
                   </View>
@@ -833,7 +1140,9 @@ export function AssignmentFormModal({
                   style={[
                     styles.toggle,
                     {
-                      backgroundColor: autoGrade ? colors.primary.main : colors.ui.border,
+                      backgroundColor: autoGrade
+                        ? colors.primary.main
+                        : colors.ui.border,
                     },
                   ]}
                 >
@@ -851,27 +1160,58 @@ export function AssignmentFormModal({
             </View>
 
             {/* Bottom Spacing */}
-            <View style={{ height: Spacing['2xl'] }} />
+            <View style={{ height: Spacing["2xl"] }} />
           </ScrollView>
 
           {/* Action Buttons */}
-          <View style={[styles.footer, { backgroundColor: colors.background.secondary, borderTopColor: colors.ui.border }]}>
+          <View
+            style={[
+              styles.footer,
+              {
+                backgroundColor: colors.background.secondary,
+                borderTopColor: colors.ui.border,
+              },
+            ]}
+          >
             <TouchableOpacity
-              style={[styles.cancelButton, { backgroundColor: colors.background.primary, borderColor: colors.ui.border }]}
+              style={[
+                styles.cancelButton,
+                {
+                  backgroundColor: colors.background.primary,
+                  borderColor: colors.ui.border,
+                },
+              ]}
               onPress={handleClose}
               activeOpacity={0.7}
             >
-              <Text style={[styles.cancelButtonText, { color: colors.text.secondary }]}>
+              <Text
+                style={[
+                  styles.cancelButtonText,
+                  { color: colors.text.secondary },
+                ]}
+              >
                 Cancel
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.submitButton, { backgroundColor: colors.primary.main }]}
+              style={[
+                styles.submitButton,
+                { backgroundColor: colors.primary.main },
+              ]}
               onPress={handleSubmit}
               activeOpacity={0.8}
             >
-              <IconSymbol name="checkmark.circle.fill" size={20} color={colors.primary.contrast} />
-              <Text style={[styles.submitButtonText, { color: colors.primary.contrast }]}>
+              <IconSymbol
+                name="checkmark.circle.fill"
+                size={20}
+                color={colors.primary.contrast}
+              />
+              <Text
+                style={[
+                  styles.submitButtonText,
+                  { color: colors.primary.contrast },
+                ]}
+              >
                 Create Assignment
               </Text>
             </TouchableOpacity>
@@ -883,24 +1223,30 @@ export function AssignmentFormModal({
               styles.toast,
               {
                 backgroundColor:
-                  toastType === 'success' ? colors.status.success.main :
-                  toastType === 'error' ? colors.status.error.main :
-                  colors.status.info.main,
+                  toastType === "success"
+                    ? colors.status.success.main
+                    : toastType === "error"
+                    ? colors.status.error.main
+                    : colors.status.info.main,
                 opacity: toastAnim,
-                transform: [{
-                  translateY: toastAnim.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-100, 0],
-                  }),
-                }],
+                transform: [
+                  {
+                    translateY: toastAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [-100, 0],
+                    }),
+                  },
+                ],
               },
             ]}
           >
             <IconSymbol
               name={
-                toastType === 'success' ? 'checkmark.circle.fill' :
-                toastType === 'error' ? 'xmark.circle.fill' :
-                'info.circle.fill'
+                toastType === "success"
+                  ? "checkmark.circle.fill"
+                  : toastType === "error"
+                  ? "xmark.circle.fill"
+                  : "info.circle.fill"
               }
               size={20}
               color="#FFFFFF"
@@ -914,7 +1260,7 @@ export function AssignmentFormModal({
           <DateTimePicker
             value={dueDate}
             mode="date"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
             onChange={handleDateChange}
             minimumDate={new Date()}
           />
@@ -925,10 +1271,20 @@ export function AssignmentFormModal({
           <DateTimePicker
             value={dueTime}
             mode="time"
-            display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+            display={Platform.OS === "ios" ? "spinner" : "default"}
             onChange={handleTimeChange}
           />
         )}
+        {/* Custom Alert */}
+        <CustomAlert
+          visible={alertConfig.visible}
+          title={alertConfig.title}
+          message={alertConfig.message}
+          icon={alertConfig.icon}
+          iconColor={alertConfig.iconColor}
+          buttons={alertConfig.buttons}
+          onClose={closeCustomAlert}
+        />
       </View>
     </Modal>
   );
@@ -937,23 +1293,23 @@ export function AssignmentFormModal({
 const styles = StyleSheet.create({
   modalOverlay: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   formModal: {
-    height: '95%',
-    borderTopLeftRadius: BorderRadius['2xl'],
-    borderTopRightRadius: BorderRadius['2xl'],
+    height: "95%",
+    borderTopLeftRadius: BorderRadius["2xl"],
+    borderTopRightRadius: BorderRadius["2xl"],
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     padding: Spacing.lg,
     paddingTop: Spacing.xl,
   },
   headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     gap: Spacing.md,
   },
@@ -961,15 +1317,15 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: BorderRadius.full,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   headerText: {
     flex: 1,
   },
   headerTitle: {
     fontSize: FontSizes.xl,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   headerSubtitle: {
     fontSize: FontSizes.sm,
@@ -978,8 +1334,8 @@ const styles = StyleSheet.create({
   closeButton: {
     width: 40,
     height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   formContent: {
     flex: 1,
@@ -987,31 +1343,31 @@ const styles = StyleSheet.create({
   section: {
     padding: Spacing.lg,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
+    borderBottomColor: "rgba(0,0,0,0.05)",
   },
   sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.md,
   },
   sectionTitle: {
     fontSize: FontSizes.lg,
-    fontWeight: '700',
+    fontWeight: "700",
     marginBottom: Spacing.md,
   },
   inputGroup: {
     marginBottom: Spacing.md,
   },
   labelRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: Spacing.xs,
   },
   label: {
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: Spacing.xs,
   },
   charCounter: {
@@ -1031,30 +1387,30 @@ const styles = StyleSheet.create({
     minHeight: 100,
   },
   typeGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    flexDirection: "row",
+    flexWrap: "wrap",
     gap: Spacing.sm,
   },
   typeCard: {
     flex: 1,
-    minWidth: '47%',
+    minWidth: "47%",
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     borderWidth: 2,
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.xs,
   },
   typeLabel: {
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.md,
   },
   dateTimeButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: Spacing.md,
     borderRadius: BorderRadius.md,
     borderWidth: 1,
@@ -1062,10 +1418,10 @@ const styles = StyleSheet.create({
   },
   dateTimeText: {
     fontSize: FontSizes.base,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   priorityButtons: {
-    flexDirection: 'row',
+    flexDirection: "row",
     gap: Spacing.xs,
   },
   priorityButton: {
@@ -1073,15 +1429,15 @@ const styles = StyleSheet.create({
     padding: Spacing.sm,
     borderRadius: BorderRadius.md,
     borderWidth: 2,
-    alignItems: 'center',
+    alignItems: "center",
   },
   priorityText: {
     fontSize: FontSizes.xs,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   addButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     paddingVertical: Spacing.xs,
     paddingHorizontal: Spacing.md,
     borderRadius: BorderRadius.full,
@@ -1089,14 +1445,14 @@ const styles = StyleSheet.create({
   },
   addButtonText: {
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   attachmentsList: {
     gap: Spacing.sm,
   },
   attachmentItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     borderWidth: 1,
@@ -1106,15 +1462,15 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: BorderRadius.md,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   attachmentInfo: {
     flex: 1,
   },
   attachmentName: {
     fontSize: FontSizes.sm,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 2,
   },
   attachmentSize: {
@@ -1123,28 +1479,28 @@ const styles = StyleSheet.create({
   emptyAttachments: {
     padding: Spacing.xl,
     borderRadius: BorderRadius.lg,
-    alignItems: 'center',
+    alignItems: "center",
     gap: Spacing.sm,
   },
   emptyText: {
     fontSize: FontSizes.base,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   emptySubtext: {
     fontSize: FontSizes.sm,
-    textAlign: 'center',
+    textAlign: "center",
   },
   optionRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     marginBottom: Spacing.sm,
   },
   optionLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     flex: 1,
     gap: Spacing.md,
   },
@@ -1153,7 +1509,7 @@ const styles = StyleSheet.create({
   },
   optionTitle: {
     fontSize: FontSizes.base,
-    fontWeight: '600',
+    fontWeight: "600",
     marginBottom: 2,
   },
   optionSubtitle: {
@@ -1163,7 +1519,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 24,
     borderRadius: BorderRadius.full,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   toggleThumb: {
     width: 20,
@@ -1171,7 +1527,7 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.full,
   },
   footer: {
-    flexDirection: 'row',
+    flexDirection: "row",
     padding: Spacing.lg,
     gap: Spacing.md,
     borderTopWidth: 1,
@@ -1180,46 +1536,46 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: Spacing.md,
     borderRadius: BorderRadius.full,
-    alignItems: 'center',
+    alignItems: "center",
     borderWidth: 1,
   },
   cancelButtonText: {
     fontSize: FontSizes.base,
-    fontWeight: '600',
+    fontWeight: "600",
   },
   submitButton: {
     flex: 2,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
     padding: Spacing.md,
     borderRadius: BorderRadius.full,
     gap: Spacing.sm,
   },
   submitButtonText: {
     fontSize: FontSizes.base,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   toast: {
-    position: 'absolute',
+    position: "absolute",
     top: Spacing.lg,
     left: Spacing.lg,
     right: Spacing.lg,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     padding: Spacing.md,
     borderRadius: BorderRadius.lg,
     gap: Spacing.sm,
-    shadowColor: '#000',
+    shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 8,
   },
   toastText: {
-    color: '#FFFFFF',
+    color: "#FFFFFF",
     fontSize: FontSizes.base,
-    fontWeight: '600',
+    fontWeight: "600",
     flex: 1,
   },
 });
