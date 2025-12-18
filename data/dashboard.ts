@@ -48,7 +48,139 @@ export const teacherProfile = {
   email: 'sarah.johnson@school.edu',
   department: 'Science',
   employeeId: 'TCH-2024-001',
+  phone: '+92 300 1234567',
+  joiningDate: '2020-09-01',
+  designation: 'Senior Teacher',
 };
+
+// Teacher Attendance/Check-in Status
+export interface AttendanceRecord {
+  id: string;
+  date: string;
+  checkInTime: string | null;
+  checkOutTime: string | null;
+  workingHours: string | null;
+  status: 'present' | 'absent' | 'checked-in';
+}
+
+export const currentAttendance: AttendanceRecord = {
+  id: 'att-' + new Date().toISOString(),
+  date: new Date().toLocaleDateString(),
+  checkInTime: null,
+  checkOutTime: null,
+  workingHours: null,
+  status: 'absent',
+};
+
+export const attendanceHistory: AttendanceRecord[] = [
+  // December 2025
+  {
+    id: '1',
+    date: '2025-12-16',
+    checkInTime: '08:45 AM',
+    checkOutTime: '04:30 PM',
+    workingHours: '7h 45m',
+    status: 'present',
+  },
+  {
+    id: '2',
+    date: '2025-12-15',
+    checkInTime: '08:50 AM',
+    checkOutTime: '04:15 PM',
+    workingHours: '7h 25m',
+    status: 'present',
+  },
+  {
+    id: '3',
+    date: '2025-12-14',
+    checkInTime: '09:00 AM',
+    checkOutTime: '04:20 PM',
+    workingHours: '7h 20m',
+    status: 'present',
+  },
+  {
+    id: '4',
+    date: '2025-12-13',
+    checkInTime: '08:55 AM',
+    checkOutTime: '04:25 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+  {
+    id: '5',
+    date: '2025-12-12',
+    checkInTime: '08:40 AM',
+    checkOutTime: '04:35 PM',
+    workingHours: '7h 55m',
+    status: 'present',
+  },
+  // November 2025
+  {
+    id: '6',
+    date: '2025-11-30',
+    checkInTime: '08:50 AM',
+    checkOutTime: '04:20 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+  {
+    id: '7',
+    date: '2025-11-29',
+    checkInTime: '08:45 AM',
+    checkOutTime: '04:15 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+  {
+    id: '8',
+    date: '2025-11-28',
+    checkInTime: '08:55 AM',
+    checkOutTime: '04:10 PM',
+    workingHours: '7h 15m',
+    status: 'present',
+  },
+  {
+    id: '9',
+    date: '2025-11-27',
+    checkInTime: '09:00 AM',
+    checkOutTime: '04:30 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+  {
+    id: '10',
+    date: '2025-11-26',
+    checkInTime: '08:40 AM',
+    checkOutTime: '04:25 PM',
+    workingHours: '7h 45m',
+    status: 'present',
+  },
+  // October 2025
+  {
+    id: '11',
+    date: '2025-10-31',
+    checkInTime: '08:50 AM',
+    checkOutTime: '04:20 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+  {
+    id: '12',
+    date: '2025-10-30',
+    checkInTime: '08:45 AM',
+    checkOutTime: '04:15 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+  {
+    id: '13',
+    date: '2025-10-29',
+    checkInTime: '08:55 AM',
+    checkOutTime: '04:25 PM',
+    workingHours: '7h 30m',
+    status: 'present',
+  },
+];
 
 // Dashboard Stats
 export const dashboardStats = {
