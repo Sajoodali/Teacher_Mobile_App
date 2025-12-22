@@ -20,8 +20,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = async () => {
     try {
-      const status = await AsyncStorage.getItem("isLoggedIn");
-      setIsLoggedIn(status === "true");
+      // We want to force login every time the app opens
+      // So we don't restore the session from storage
+      // const status = await AsyncStorage.getItem("isLoggedIn");
+      // setIsLoggedIn(status === "true");
+      setIsLoggedIn(false);
     } catch (e) {
       console.error("Auth check failed", e);
     } finally {

@@ -260,7 +260,7 @@ export default function DashboardScreen() {
             <Text style={[styles.greeting, { color: colors.text.secondary }]}>
               {getGreeting()}
             </Text>
-            <Text style={[styles.teacherName, { color: colors.text.primary }]}>
+            <Text style={[styles.teacherName, { color: colors.primary.main }]}>
               {teacherProfile.name}
             </Text>
           </View>

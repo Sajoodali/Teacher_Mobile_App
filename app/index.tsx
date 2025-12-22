@@ -157,8 +157,8 @@ const styles = StyleSheet.create({
   },
   headerSection: {
     alignItems: "center",
-    marginTop: Spacing["lg"],
-    // marginBottom: S,
+    marginTop: Spacing["3xl"],
+    marginBottom: Spacing.xl,
   },
   logoContainer: {
     width: 100,
