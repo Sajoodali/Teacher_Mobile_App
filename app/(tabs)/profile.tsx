@@ -17,13 +17,10 @@ import {
 } from "@/components/profile/LeaveApplicationModal";
 import { CustomAlert } from "@/components/ui/CustomAlert";
 import { BorderRadius, FontSizes, Spacing } from "@/constants/theme";
+import { useAttendance } from "@/context/AttendanceContext";
+import { useAuth } from "@/context/AuthContext";
 import { useTheme } from "@/context/ThemeContext";
-import {
-  AttendanceRecord,
-  attendanceHistory as initialAttendanceHistory,
-  currentAttendance as initialCurrentAttendance,
-  teacherProfile,
-} from "@/data";
+import { teacherProfile } from "@/data";
 import { Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -132,24 +129,26 @@ const SettingItem: React.FC<SettingItemProps> = ({
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { logout } = useAuth();
   const { colors, isDark, toggleTheme } = useTheme();
+
+  // Use Global Attendance Context
+  const {
+    currentAttendance,
+    attendanceHistory,
+    checkIn,
+    checkOut,
+    isLoading: isAttendanceLoading,
+    isCheckedIn,
+  } = useAttendance();
 
   const [notifications, setNotifications] = useState(true);
   const [biometrics, setBiometrics] = useState(false);
   const [showAttendanceHistory, setShowAttendanceHistory] = useState(false);
   const [showLeaveApplication, setShowLeaveApplication] = useState(false);
-  const [checkInLoading, setCheckInLoading] = useState(false);
   const [leaveApplications, setLeaveApplications] = useState<
     LeaveApplication[]
   >([]);
-
-  // Attendance state
-  const [currentAttendance, setCurrentAttendance] = useState<AttendanceRecord>(
-    initialCurrentAttendance
-  );
-  const [attendanceHistory, setAttendanceHistory] = useState<
-    AttendanceRecord[]
-  >(initialAttendanceHistory);
   // Alert State
   const [alertConfig, setAlertConfig] = useState({
     visible: false,
@@ -181,87 +180,8 @@ export default function ProfileScreen() {
     setAlertConfig((prev) => ({ ...prev, visible: false }));
   };
 
-  const isCheckedIn =
-    currentAttendance.status === "checked-in" ||
-    currentAttendance.status === "present";
-
-  const handleCheckIn = () => {
-    setCheckInLoading(true);
-    setTimeout(() => {
-      const now = new Date();
-      const checkInTime = now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-
-      setCurrentAttendance({
-        ...currentAttendance,
-        checkInTime,
-        status: "checked-in",
-      });
-
-      setCheckInLoading(false);
-      showAlert(
-        "✅ Checked In",
-        `Welcome! You checked in at ${checkInTime}`,
-        "checkmark.circle.fill",
-        colors.status.success.main
-      );
-    }, 1000);
-  };
-
-  const handleCheckOut = () => {
-    showAlert(
-      "Confirm Check Out",
-      "Are you sure you want to check out for the day?",
-      "log-out.fill",
-      colors.status.warning.main,
-      [
-        { text: "Cancel", style: "cancel", onPress: closeAlert },
-        {
-          text: "Check Out",
-          style: "default",
-          onPress: () => {
-            closeAlert();
-            setCheckInLoading(true);
-            setTimeout(() => {
-              const now = new Date();
-              const checkOutTime = now.toLocaleTimeString("en-US", {
-                hour: "2-digit",
-                minute: "2-digit",
-              });
-
-              // Calculate working hours (simplified)
-              const workingHours = "8h 15m";
-
-              const completedRecord: AttendanceRecord = {
-                ...currentAttendance,
-                checkOutTime,
-                workingHours,
-                status: "present",
-              };
-
-              // Add to history
-              setAttendanceHistory([completedRecord, ...attendanceHistory]);
-
-              // Update current state to show COMPLETED status instead of resetting
-              setCurrentAttendance(completedRecord);
-
-              setCheckInLoading(false);
-              setTimeout(() => {
-                showAlert(
-                  "👋 See You Tomorrow!",
-                  `You worked for ${workingHours} today. Have a great evening!`,
-                  "moon.stars.fill",
-                  colors.primary.main
-                );
-              }, 500);
-            }, 1000);
-          },
-        },
-      ]
-    );
-  };
+  const handleCheckIn = checkIn;
+  const handleCheckOut = checkOut;
 
   const handleLogout = () => {
     showAlert(
@@ -276,14 +196,12 @@ export default function ProfileScreen() {
           style: "destructive",
           onPress: async () => {
             closeAlert();
-            // Clear AsyncStorage
             try {
-              await AsyncStorage.removeItem("isLoggedIn");
-              await AsyncStorage.removeItem("userEmail");
+              await logout();
+              router.replace("/");
             } catch (error) {
-              console.error("Error clearing auth data:", error);
+              console.error("Error logging out:", error);
             }
-            router.replace("/");
           },
         },
       ]
@@ -386,9 +304,10 @@ export default function ProfileScreen() {
             isCheckedIn={isCheckedIn}
             checkInTime={currentAttendance.checkInTime}
             checkOutTime={currentAttendance.checkOutTime}
+            workingHours={currentAttendance.workingHours}
             onCheckIn={handleCheckIn}
             onCheckOut={handleCheckOut}
-            loading={checkInLoading}
+            loading={isAttendanceLoading}
           />
 
           {/* Attendance History Button */}
