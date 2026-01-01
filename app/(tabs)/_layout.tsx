@@ -153,15 +153,11 @@ export default function TabLayout() {
           }}
         />
 
-        {/* Schedule Tab */}
+        {/* Hide Schedule Tab */}
         <Tabs.Screen
           name="schedule"
           options={{
-            title: "Schedule",
-            headerTitle: "My Schedule",
-            tabBarIcon: ({ color, focused }) => (
-              <IconSymbol size={28} name="calendar" color={color} />
-            ),
+            href: null,
           }}
         />
 
