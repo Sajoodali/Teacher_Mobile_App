@@ -50,7 +50,9 @@ function RootLayoutNav() {
     if (isLoading) return;
 
     const inTabsGroup = segments[0] === "(tabs)";
-    const inAuthGroup = segments.length === 0 || segments[0] === "index";
+    const inAuthGroup =
+      (segments as string[]).length === 0 ||
+      (segments[0] as string) === "index";
 
     console.log("📍 Navigation Check:", {
       isLoggedIn,
