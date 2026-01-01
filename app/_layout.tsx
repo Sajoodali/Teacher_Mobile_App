@@ -8,6 +8,7 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import "react-native-reanimated";
 
+import { AttendanceProvider } from "@/context/AttendanceContext";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import { ThemeProvider, useTheme } from "@/context/ThemeContext";
 
@@ -154,7 +155,9 @@ export default function RootLayout() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <RootLayoutNav />
+        <AttendanceProvider>
+          <RootLayoutNav />
+        </AttendanceProvider>
       </AuthProvider>
     </ThemeProvider>
   );

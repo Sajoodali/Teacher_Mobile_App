@@ -20,12 +20,10 @@ import { useTheme } from "@/context/ThemeContext";
 import {
   classSchedule,
   dashboardStats,
-  currentAttendance as initialCurrentAttendance,
   initialNotifications,
   recentActivities as initialRecentActivities,
   teacherProfile,
   todayAttendance,
-  type AttendanceRecord,
   type Notification,
   type QuickAction,
   type RecentActivity,
@@ -45,6 +43,7 @@ import {
   TouchableOpacity,
   View,
 } from "react-native";
+import { useAttendance } from "../../context/AttendanceContext";
 
 const { width } = Dimensions.get("window");
 
@@ -75,15 +74,14 @@ export default function DashboardScreen() {
   const [notifications, setNotifications] =
     useState<Notification[]>(initialNotifications);
 
-  // Check-in/out state
-  const [checkInLoading, setCheckInLoading] = useState(false);
-  const [currentAttendance, setCurrentAttendance] = useState<AttendanceRecord>(
-    initialCurrentAttendance
-  );
-
-  const isCheckedIn =
-    currentAttendance.status === "checked-in" ||
-    currentAttendance.status === "present";
+  // Check-in/out state from Global Context
+  const {
+    currentAttendance,
+    checkIn,
+    checkOut,
+    isLoading: isAttendanceLoading,
+    isCheckedIn,
+  } = useAttendance();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -202,48 +200,8 @@ export default function DashboardScreen() {
     );
   };
 
-  const handleCheckIn = () => {
-    setCheckInLoading(true);
-    setTimeout(() => {
-      const now = new Date();
-      const checkInTime = now.toLocaleTimeString("en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-      setCurrentAttendance({
-        ...currentAttendance,
-        checkInTime,
-        status: "checked-in",
-      });
-      setCheckInLoading(false);
-    }, 1000);
-  };
-
-  const handleCheckOut = () => {
-    Alert.alert("Check Out", "Confirm check out?", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Check Out",
-        style: "default",
-        onPress: () => {
-          setCheckInLoading(true);
-          setTimeout(() => {
-            const now = new Date();
-            const checkOutTime = now.toLocaleTimeString("en-US", {
-              hour: "2-digit",
-              minute: "2-digit",
-            });
-            setCurrentAttendance({
-              ...currentAttendance,
-              checkOutTime,
-              status: "present",
-            });
-            setCheckInLoading(false);
-          }, 1000);
-        },
-      },
-    ]);
-  };
+  const handleCheckIn = checkIn;
+  const handleCheckOut = checkOut;
 
   return (
     <SafeAreaView
@@ -403,9 +361,10 @@ export default function DashboardScreen() {
               isCheckedIn={isCheckedIn}
               checkInTime={currentAttendance.checkInTime}
               checkOutTime={currentAttendance.checkOutTime}
+              workingHours={currentAttendance.workingHours}
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
-              loading={checkInLoading}
+              loading={isAttendanceLoading}
             />
           </View>
 

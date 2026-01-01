@@ -12,7 +12,6 @@ import {
   ScrollView,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from "react-native";
 
@@ -58,14 +57,6 @@ export default function LoginScreen() {
     }, 1000);
   };
 
-  const handleBiometricLogin = () => {
-    Alert.alert(
-      "Biometric Login",
-      "Biometric authentication will be implemented here",
-      [{ text: "OK" }]
-    );
-  };
-
   return (
     <KeyboardAvoidingView
       style={[styles.container, { backgroundColor: colors.background.primary }]}
@@ -75,6 +66,7 @@ export default function LoginScreen() {
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
         {/* Header Section */}
         <View style={styles.headerSection}>
@@ -99,39 +91,6 @@ export default function LoginScreen() {
 
         {/* Login Component */}
         <LoginForm onLogin={handleLogin} isLoading={isLoading} />
-
-        {/* Divider */}
-        <View style={styles.dividerContainer}>
-          <View
-            style={[styles.divider, { backgroundColor: colors.ui.divider }]}
-          />
-          <Text style={[styles.dividerText, { color: colors.text.tertiary }]}>
-            OR
-          </Text>
-          <View
-            style={[styles.divider, { backgroundColor: colors.ui.divider }]}
-          />
-        </View>
-
-        {/* Biometric Login Button */}
-        <TouchableOpacity
-          style={[
-            styles.biometricButton,
-            {
-              backgroundColor: colors.background.secondary,
-              borderColor: colors.ui.border,
-            },
-          ]}
-          onPress={handleBiometricLogin}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.biometricIcon}>🔐</Text>
-          <Text
-            style={[styles.biometricButtonText, { color: colors.text.primary }]}
-          >
-            Login with Biometrics
-          </Text>
-        </TouchableOpacity>
 
         {/* Footer */}
         <View style={styles.footer}>
@@ -184,37 +143,6 @@ const styles = StyleSheet.create({
   },
   subtitle: {
     fontSize: FontSizes.base,
-  },
-  dividerContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    marginVertical: Spacing.lg,
-  },
-  divider: {
-    flex: 1,
-    height: 1,
-  },
-  dividerText: {
-    marginHorizontal: Spacing.md,
-    fontSize: FontSizes.sm,
-    fontWeight: "500",
-  },
-  biometricButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: Spacing.md,
-    borderRadius: BorderRadius.md,
-    borderWidth: 1,
-    minHeight: 52,
-  },
-  biometricIcon: {
-    fontSize: 24,
-    marginRight: Spacing.sm,
-  },
-  biometricButtonText: {
-    fontSize: FontSizes.base,
-    fontWeight: "600",
   },
   footer: {
     alignItems: "center",
