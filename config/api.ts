@@ -1,6 +1,6 @@
 // Base URL for the backend API
 // Replace with your actual backend IP/domain
-export const BASE_URL = 'http://192.168.1.244:3000'; // Adjust port if needed
+export const BASE_URL = 'http://192.168.100.67:3000'; // Adjust port if needed
 
 // API Endpoints Configuration
 export const API_ENDPOINTS = {
@@ -10,6 +10,9 @@ export const API_ENDPOINTS = {
     LOGOUT: '/api/auth/logout',
     ME: '/api/auth/me',
   },
+  NOTIFICATIONS: {
+    SAVE_TOKEN: '/api/auth/save-token',
+  }
 };
 
 // Helper function to construct full API URL
