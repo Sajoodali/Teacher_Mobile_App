@@ -1,141 +1,17 @@
-// import { API_ENDPOINTS, BASE_URL } from '@/config/api';
-// import AsyncStorage from '@react-native-async-storage/async-storage';
-// import Constants from 'expo-constants';
-// import * as Notifications from 'expo-notifications';
-// import { useCallback, useEffect, useRef, useState } from 'react';
-
-// // UI ke liye Type Definition (Jo aapke component me hai)
-// export interface NotificationUI {
-//     id: string;
-//     title: string;
-//     message: string;
-//     time: string;
-//     type: 'info' | 'warning' | 'success';
-//     read: boolean;
-// }
-
-// export const useNotifications = () => {
-//     const [notifications, setNotifications] = useState<NotificationUI[]>([]);
-//     const [unreadCount, setUnreadCount] = useState(0);
-//     const [loading, setLoading] = useState(false);
-//     const responseListener = useRef<Notifications.Subscription | null>(null);
-
-//     // 1. Data Formatter: Backend DB -> Mobile UI
-//     const formatTime = (dateString: string) => {
-//         const date = new Date(dateString);
-//         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-//     };
-
-//     const mapBackendToUI = (data: any[]): NotificationUI[] => {
-//         return data.map((item) => ({
-//             id: item._id,
-//             title: item.title,
-//             message: item.message,
-//             time: formatTime(item.createdAt),
-//             // Backend type ko UI type se match karo
-//             type: ['assignment', 'exam', 'fee_overdue'].includes(item.type) ? 'warning'
-//                 : ['result', 'fee_payment'].includes(item.type) ? 'success'
-//                     : 'info',
-//             read: item.isRead || false,
-//         }));
-//     };
-
-//     // 2. Fetch Notifications from Backend
-//     const fetchNotifications = useCallback(async () => {
-//         try {
-//             setLoading(true);
-//             const token = await AsyncStorage.getItem('token');
-//             const userStr = await AsyncStorage.getItem('user');
-
-//             if (!userStr || !token) return;
-//             const user = JSON.parse(userStr);
-//             const userId = user._id || user.id;
-
-//             const response = await fetch(`${BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.GET_NOTIFICATIONS}?userId=${userId}`, {
-//                 headers: {
-//                     'Authorization': `Bearer ${token}`,
-//                     'Content-Type': 'application/json',
-//                 },
-//             });
-
-//             const result = await response.json();
-
-//             if (result.success) {
-//                 const formattedData = mapBackendToUI(result.data.notifications);
-//                 setNotifications(formattedData);
-//                 setUnreadCount(result.data.unreadCount);
-//             }
-//         } catch (error) {
-//             console.error('Fetch Notification Error:', error);
-//         } finally {
-//             setLoading(false);
-//         }
-//     }, []);
-
-//     // 3. Mark As Read (Sirf Local Update for now, Backend API call add kr skte ho)
-//     const markAsRead = async (id: string) => {
-//         // Optimistic UI Update
-//         setNotifications(prev =>
-//             prev.map(n => n.id === id ? { ...n, read: true } : n)
-//         );
-//         setUnreadCount(prev => Math.max(0, prev - 1));
-
-//         // TODO: Yahan backend API call lagana: POST /api/notification/mark-read
-//     };
-
-//     const markAllAsRead = () => {
-//         setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-//         setUnreadCount(0);
-//     };
-
-//     // 4. Initial Load & Listeners
-//     useEffect(() => {
-//         fetchNotifications();
-
-//         // Skip notification listeners in Expo Go (SDK 53+ doesn't support push notifications)
-//         const isExpoGo = Constants.appOwnership === 'expo';
-
-//         if (isExpoGo) {
-//             console.log('⚠️ Running in Expo Go - Push notifications are disabled. Use a development build for full notification support.');
-//             return; // Skip listener setup
-//         }
-
-//         // Jab app open ho aur notification aaye, list refresh karo
-//         const subscription = Notifications.addNotificationReceivedListener(() => {
-//             fetchNotifications(); // Refresh list silently
-//         });
-
-//         return () => subscription.remove();
-//     }, [fetchNotifications]);
-
-//     return {
-//         notifications,
-//         unreadCount,
-//         loading,
-//         fetchNotifications,
-//         markAsRead,
-//         markAllAsRead,
-//     };
-// };
-
-
-
-
-
-
 import { API_ENDPOINTS, BASE_URL } from '@/config/api';
+import { useAuth } from '@/context/AuthContext'; // 🔥 Context se User lenge
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Device from 'expo-device'; // 🔥 Ye install hona chahiye
+import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Platform } from 'react-native';
 
-// Notification Handler (App open hony p bhi notification dikhaye)
+// 1. Notification Handler Configuration
 Notifications.setNotificationHandler({
     handleNotification: async () => ({
         shouldShowAlert: true,
         shouldPlaySound: true,
-        shouldSetBadge: false,
+        shouldSetBadge: true,
         shouldShowBanner: true,
         shouldShowList: true,
     }),
@@ -151,17 +27,23 @@ export interface NotificationUI {
 }
 
 export const useNotifications = () => {
+    // 🔥 DIRECT ACCESS TO USER (No waiting for AsyncStorage)
+    const { user } = useAuth();
+
     const [notifications, setNotifications] = useState<NotificationUI[]>([]);
     const [unreadCount, setUnreadCount] = useState(0);
     const [loading, setLoading] = useState(false);
+
+    const notificationListener = useRef<Notifications.Subscription | null>(null);
     const responseListener = useRef<Notifications.Subscription | null>(null);
 
-    // 1. Data Formatter
+    // Helper: Time Format
     const formatTime = (dateString: string) => {
         const date = new Date(dateString);
         return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     };
 
+    // Helper: Map Backend Data to UI
     const mapBackendToUI = (data: any[]): NotificationUI[] => {
         return data.map((item) => ({
             id: item._id,
@@ -175,43 +57,11 @@ export const useNotifications = () => {
         }));
     };
 
-    // 2. Fetch Notifications Logic
-    const fetchNotifications = useCallback(async () => {
-        try {
-            setLoading(true);
-            const token = await AsyncStorage.getItem('token');
-            const userStr = await AsyncStorage.getItem('user');
-
-            if (!userStr || !token) return;
-            const user = JSON.parse(userStr);
-            const userId = user._id || user.id;
-
-            const response = await fetch(`${BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.GET_NOTIFICATIONS}?userId=${userId}`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                const formattedData = mapBackendToUI(result.data.notifications);
-                setNotifications(formattedData);
-                setUnreadCount(result.data.unreadCount);
-            }
-        } catch (error) {
-            console.error('Fetch Notification Error:', error);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
-
     // ============================================================
-    // 🔥 NEW: TOKEN REGISTRATION & SAVING LOGIC
+    // 2. TOKEN GENERATION & SAVING
     // ============================================================
     const registerForPushNotificationsAsync = async () => {
-        let token;
+        if (!user || !user._id) return; // User nahi to Token kiske liye?
 
         if (Platform.OS === 'android') {
             await Notifications.setNotificationChannelAsync('default', {
@@ -232,56 +82,101 @@ export const useNotifications = () => {
             }
 
             if (finalStatus !== 'granted') {
-                console.log('Failed to get push token permission!');
+                console.log('❌ Permission not granted for notifications');
                 return;
             }
 
-            // ✅ Project ID zaroori hai Development Build k liye
-            token = (await Notifications.getExpoPushTokenAsync({
-                projectId: '305b608b-280d-4995-beb7-9a5ad3e55fd5'
-            })).data;
+            try {
+                // 🔥 Project ID (App.json wala ID)
+                const tokenData = await Notifications.getExpoPushTokenAsync({
+                    projectId: '305b608b-280d-4995-beb7-9a5ad3e55fd5'
+                });
 
-            console.log("📲 Generated Token:", token);
-            console.log("📲 Generated Token:", token);
-            // Backend par bhejo
-            await saveTokenToBackend(token);
+                const token = tokenData.data;
+                console.log("📲 Generated Token:", token);
+
+                // Backend par bhejo
+                await saveTokenToBackend(token);
+            } catch (error) {
+                console.error("❌ Error getting token:", error);
+            }
         } else {
-            console.log('Must use physical device for Push Notifications');
+            console.log('⚠️ Physical device required for Push Notifications');
         }
     };
 
     const saveTokenToBackend = async (pushToken: string) => {
         try {
-            const userStr = await AsyncStorage.getItem('user');
-            const token = await AsyncStorage.getItem('token'); // Auth token
-            if (!userStr) return;
-            const user = JSON.parse(userStr);
+            if (!user || !user._id) return;
 
-            // API Endpoint for saving token
-            const response = await fetch(`${BASE_URL}/api/user/save-token`, {
+            const authToken = await AsyncStorage.getItem('token'); // Auth Token
+            const url = `${BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.SAVE_TOKEN}`;
+
+            console.log("📡 Saving Token to DB for User:", user.fullName);
+
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    // 'Authorization': `Bearer ${token}` // Agar secured hai to
+                    'Authorization': `Bearer ${authToken}`
                 },
                 body: JSON.stringify({
-                    userId: user._id || user.id,
+                    userId: user._id,
                     token: pushToken
                 })
             });
+
             const data = await response.json();
-            console.log("✅ Token Saved to DB:", data.success);
+
+            if (data.success) {
+                console.log("✅ Token Saved Successfully!");
+            } else {
+                console.log("⚠️ Token Save Failed:", data.message);
+            }
+
         } catch (error) {
-            console.error("❌ Failed to save token:", error);
+            console.error("🔥 Network Error (Save Token):", error);
         }
     }
 
-    // 3. Mark As Read
+    // ============================================================
+    // 3. FETCH NOTIFICATIONS
+    // ============================================================
+    const fetchNotifications = useCallback(async () => {
+        if (!user || !user._id) return;
+
+        try {
+            setLoading(true);
+            const authToken = await AsyncStorage.getItem('token');
+
+            const url = `${BASE_URL}${API_ENDPOINTS.NOTIFICATIONS.GET_NOTIFICATIONS}?userId=${user._id}`;
+
+            const response = await fetch(url, {
+                headers: {
+                    'Authorization': `Bearer ${authToken}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                const formattedData = mapBackendToUI(result.data.notifications);
+                setNotifications(formattedData);
+                setUnreadCount(result.data.unreadCount);
+            }
+        } catch (error) {
+            console.error('❌ Fetch Error:', error);
+        } finally {
+            setLoading(false);
+        }
+    }, [user]);
+
+    // 4. Mark Read Actions
     const markAsRead = async (id: string) => {
-        setNotifications(prev =>
-            prev.map(n => n.id === id ? { ...n, read: true } : n)
-        );
+        setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
         setUnreadCount(prev => Math.max(0, prev - 1));
+        // TODO: Call Backend API here
     };
 
     const markAllAsRead = () => {
@@ -289,21 +184,31 @@ export const useNotifications = () => {
         setUnreadCount(0);
     };
 
-    // 4. Initial Load
+    // 5. Initial Lifecycle
     useEffect(() => {
-        // 1. Fetch List
-        fetchNotifications();
+        if (user) {
+            // 1. Token Register karo (Only if user exists)
+            registerForPushNotificationsAsync();
 
-        // 2. 🔥 Register Token (Ye missing tha pehle)
-        registerForPushNotificationsAsync();
+            // 2. Notifications Load karo
+            fetchNotifications();
+        }
 
-        // 3. Listen for incoming notifications
-        const subscription = Notifications.addNotificationReceivedListener(() => {
-            fetchNotifications(); // Naya message aate hi list update karo
+        // 3. Listeners setup karo
+        notificationListener.current = Notifications.addNotificationReceivedListener(notification => {
+            console.log("🔔 New Notification Received!");
+            fetchNotifications(); // Refresh list
         });
 
-        return () => subscription.remove();
-    }, [fetchNotifications]);
+        responseListener.current = Notifications.addNotificationResponseReceivedListener(response => {
+            console.log("👆 Notification Clicked");
+        });
+
+        return () => {
+            notificationListener.current?.remove();
+            responseListener.current?.remove();
+        };
+    }, [user]); // 🔥 Run whenever user changes (Login/Logout)
 
     return {
         notifications,
